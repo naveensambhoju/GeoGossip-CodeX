@@ -74,6 +74,7 @@ const mapApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
 type TabKey = 'map' | 'feed';
 type LocationPreference = 'current' | 'map';
 type MapVisualType = 'standard' | 'satellite';
+type PlaceSuggestion = { id: string; description: string; placeId: string };
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'map', label: 'Gossips' },
@@ -150,6 +151,10 @@ function MapTab({
   const [mapReady, setMapReady] = useState(false);
   const [mapVisualType, setMapVisualType] = useState<MapVisualType>('standard');
   const insets = useSafeAreaInsets();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const mapRef = useRef<MapView | null>(null);
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const collapsedHeight = 110;
@@ -193,6 +198,92 @@ function MapTab({
     };
     mapRef.current?.animateToRegion(nextRegion, 200);
     setRegion(nextRegion);
+  };
+
+  const searchBarTop = Math.max(insets.top, 12) + 12;
+  const hasSuggestionOverlay = Boolean(mapApiKey && (suggestions.length > 0 || searchLoading || searchError));
+  const mapTypeTop = hasSuggestionOverlay ? searchBarTop + 180 : searchBarTop + 52;
+
+  useEffect(() => {
+    if (!mapApiKey || searchQuery.trim().length < 3) {
+      setSuggestions([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    setSearchLoading(true);
+    setSearchError(null);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(async () => {
+      try {
+        const url =
+          'https://maps.googleapis.com/maps/api/place/autocomplete/json?' +
+          `input=${encodeURIComponent(searchQuery.trim())}` +
+          `&key=${mapApiKey}` +
+          `&location=${region.latitude},${region.longitude}` +
+          '&radius=50000&types=geocode';
+        const response = await fetch(url, { signal: controller.signal });
+        const data = await response.json();
+        if (data.status === 'OK') {
+          setSuggestions(
+            data.predictions.map((prediction: any) => ({
+              id: prediction.place_id,
+              description: prediction.description,
+              placeId: prediction.place_id,
+            })),
+          );
+        } else {
+          setSearchError(data.error_message ?? data.status);
+          setSuggestions([]);
+        }
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          setSearchError('Unable to fetch suggestions.');
+          setSuggestions([]);
+        }
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [searchQuery, mapApiKey, region.latitude, region.longitude]);
+
+  const handleSuggestionPress = async (placeId: string, description: string) => {
+    if (!mapApiKey) return;
+    setSearchLoading(true);
+    setSearchError(null);
+    try {
+      const detailsUrl =
+        'https://maps.googleapis.com/maps/api/place/details/json?' +
+        `place_id=${placeId}` +
+        '&fields=geometry' +
+        `&key=${mapApiKey}`;
+      const response = await fetch(detailsUrl);
+      const data = await response.json();
+      if (data.status === 'OK') {
+        const location = data.result.geometry.location;
+        const targetRegion: Region = {
+          latitude: location.lat,
+          longitude: location.lng,
+          latitudeDelta: region.latitudeDelta,
+          longitudeDelta: region.longitudeDelta,
+        };
+        mapRef.current?.animateToRegion(targetRegion, 400);
+        setRegion(targetRegion);
+        setSearchQuery(description);
+        setSuggestions([]);
+      } else {
+        setSearchError(data.error_message ?? data.status);
+      }
+    } catch (error) {
+      setSearchError('Failed to retrieve location.');
+    } finally {
+      setSearchLoading(false);
+    }
   };
 
   return (
@@ -243,7 +334,39 @@ function MapTab({
         >
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
-        <View style={[styles.mapTypeToggle, { top: Math.max(insets.top, 12) + 8 }]}>
+        <View style={[styles.searchBar, { top: searchBarTop }]}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder={mapApiKey ? 'Search locations' : 'Add Google Maps API key'}
+            placeholderTextColor="#94a3b8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            editable={Boolean(mapApiKey)}
+          />
+          {searchQuery ? (
+            <TouchableOpacity style={styles.searchClear} onPress={() => setSearchQuery('')}>
+              <Text style={styles.searchClearText}>×</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+        {hasSuggestionOverlay ? (
+          <View style={[styles.suggestionsPanel, { top: searchBarTop + 50 }]}>
+            {searchLoading ? <Text style={styles.suggestionMeta}>Looking around…</Text> : null}
+            {searchError ? <Text style={styles.suggestionError}>{searchError}</Text> : null}
+            {suggestions.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.suggestionRow}
+                onPress={() => handleSuggestionPress(item.placeId, item.description)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.suggestionText}>{item.description}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
+        <View style={[styles.mapTypeToggle, { top: mapTypeTop }]}>
           {(
             [
               { key: 'standard', label: 'Map' },
@@ -474,7 +597,6 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: '#020617',
-    paddingHorizontal: 16,
     paddingBottom: 16,
   },
   tabDock: {
@@ -525,6 +647,70 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1e293b',
     position: 'relative',
+    marginHorizontal: 0,
+  },
+  searchBar: {
+    position: 'absolute',
+    left: 24,
+    right: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0b1220cc',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    paddingHorizontal: 14,
+    height: 44,
+  },
+  searchInput: {
+    flex: 1,
+    color: '#f8fafc',
+    fontSize: 15,
+  },
+  searchClear: {
+    marginLeft: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1e293b',
+  },
+  searchClearText: {
+    color: '#94a3b8',
+    fontSize: 16,
+    lineHeight: 16,
+  },
+  suggestionsPanel: {
+    position: 'absolute',
+    left: 24,
+    right: 24,
+    backgroundColor: '#0b1220f2',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    paddingVertical: 6,
+    maxHeight: 240,
+  },
+  suggestionRow: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  suggestionText: {
+    color: '#f8fafc',
+    fontSize: 14,
+  },
+  suggestionMeta: {
+    color: '#94a3b8',
+    fontSize: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+  },
+  suggestionError: {
+    color: '#f87171',
+    fontSize: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
   },
   centerPin: {
     position: 'absolute',
