@@ -11,14 +11,6 @@ const defineConfig = (): ExpoConfig => ({
     resizeMode: 'contain',
     backgroundColor: '#020617',
   },
-  expo: {
-    android: {
-      permissions: [
-        "android.permission.DETECT_SCREEN_CAPTURE"
-      ],
-      package: "com.geogossip.app"
-    }
-  },
   ios: {
     supportsTablet: false,
     bundleIdentifier: 'com.geogossip.app',
