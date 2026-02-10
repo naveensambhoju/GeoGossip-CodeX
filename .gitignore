@@ -1,1 +1,8 @@
 node_modules
+firebase-debug.log
+firestore-debug.log
+dataconnect-debug.log
+pglite-debug.log
+/dataconnect/
+/src/dataconnect-generated/
+functions/src/dataconnect-admin-generated/

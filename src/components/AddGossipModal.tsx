@@ -3,17 +3,31 @@ import { Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, Touchable
 import { GOSSIP_TYPES } from '../constants';
 import { LocationPreference } from '../types';
 
-type Props = {
-  visible: boolean;
-  onClose: () => void;
+export type SubmitGossipForm = {
+  subject: string;
+  description: string;
+  gossipType: string;
+  locationPreference: LocationPreference;
+  location?: { latitude: number; longitude: number } | null;
 };
 
-export function AddGossipModal({ visible, onClose }: Props) {
+type Props = {
+  visible: boolean;
+  initialLocation?: { latitude: number; longitude: number } | null;
+  onClose: () => void;
+  onSubmit: (payload: SubmitGossipForm) => Promise<void>;
+};
+
+const DEFAULT_TYPE = GOSSIP_TYPES[0] ?? 'General';
+
+export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: Props) {
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
-  const [gossipType, setGossipType] = useState(GOSSIP_TYPES[0]);
+  const [gossipType, setGossipType] = useState<string>(DEFAULT_TYPE);
   const [locationPreference, setLocationPreference] = useState<LocationPreference>('current');
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!visible) {
@@ -24,7 +38,7 @@ export function AddGossipModal({ visible, onClose }: Props) {
   const handleClose = () => {
     setSubject('');
     setDescription('');
-    setGossipType(GOSSIP_TYPES[0]);
+    setGossipType(DEFAULT_TYPE);
     setLocationPreference('current');
     setTypeMenuOpen(false);
     onClose();
@@ -34,8 +48,23 @@ export function AddGossipModal({ visible, onClose }: Props) {
     console.log('Preview gossip', { subject, description, gossipType, locationPreference });
   };
 
-  const handlePost = () => {
-    console.log('Post gossip', { subject, description, gossipType, locationPreference });
+  const handlePost = async () => {
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await onSubmit({
+        subject,
+        description,
+        gossipType,
+        locationPreference,
+        location: initialLocation ?? null,
+      });
+      handleClose();
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Failed to submit gossip');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -125,12 +154,13 @@ export function AddGossipModal({ visible, onClose }: Props) {
               ))}
             </View>
           </View>
+          {submitError ? <Text style={styles.submitError}>{submitError}</Text> : null}
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.secondaryButton} onPress={handlePreview}>
+            <TouchableOpacity style={styles.secondaryButton} onPress={handlePreview} disabled={submitting}>
               <Text style={styles.secondaryButtonText}>Preview</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.primaryButton} onPress={handlePost}>
-              <Text style={styles.primaryButtonText}>Post</Text>
+            <TouchableOpacity style={[styles.primaryButton, submitting && styles.buttonDisabled]} onPress={handlePost} disabled={submitting}>
+              <Text style={styles.primaryButtonText}>{submitting ? 'Posting…' : 'Post'}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -294,5 +324,13 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: '#020617',
     fontWeight: '700',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  submitError: {
+    color: '#f87171',
+    textAlign: 'center',
+    marginBottom: 8,
   },
 });

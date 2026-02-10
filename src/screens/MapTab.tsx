@@ -22,7 +22,7 @@ const SHEET_EXPANDED = Dimensions.get('window').height * 0.82;
 export type MapTabProps = {
   gossips: Gossip[];
   mapApiKey: string;
-  onAddRequest: () => void;
+  onAddRequest: (region: Region) => void;
 };
 
 export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
@@ -209,7 +209,7 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
           accessibilityRole="button"
           accessibilityLabel="Add new gossip"
           style={styles.addButton}
-          onPress={onAddRequest}
+          onPress={() => onAddRequest(region)}
         >
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
