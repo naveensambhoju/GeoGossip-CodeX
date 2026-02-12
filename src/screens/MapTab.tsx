@@ -34,6 +34,7 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const pulseAnim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
   const sheetHeight = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
   const mapRef = useRef<MapView | null>(null);
@@ -80,6 +81,25 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
   const searchBarTop = Math.max(insets.top, 12) + 12;
   const hasSuggestionOverlay = Boolean(mapApiKey && (suggestions.length > 0 || searchLoading || searchError));
   const mapTypeTop = hasSuggestionOverlay ? searchBarTop + 180 : searchBarTop + 52;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulseAnim]);
 
   useEffect(() => {
     if (!mapApiKey || searchQuery.trim().length < 3) {
@@ -216,8 +236,10 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
             ))}
         </MapView>
         <View pointerEvents="none" style={styles.centerPin}>
-          <View style={styles.centerPinHead} />
-          <View style={styles.centerPinTip} />
+          <View style={styles.centerPinBullet}>
+            <View style={styles.centerPinInner} />
+          </View>
+          <View style={styles.centerPinLine} />
         </View>
         <TouchableOpacity
           accessibilityRole="button"
@@ -338,26 +360,35 @@ const styles = StyleSheet.create({
     left: '50%',
     top: '50%',
     alignItems: 'center',
-    transform: [{ translateY: -28 }, { translateX: -12 }],
+    transform: [{ translateY: -30 }, { translateX: -15 }],
   },
-  centerPinHead: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#ef4444',
+  centerPinBullet: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#dc2626',
     borderWidth: 2,
-    borderColor: '#0f172a',
+    borderColor: '#7f1d1d',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#b91c1c',
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 8,
   },
-  centerPinTip: {
-    width: 0,
-    height: 0,
-    marginTop: -6,
-    borderLeftWidth: 8,
-    borderRightWidth: 8,
-    borderTopWidth: 16,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: '#ef4444',
+  centerPinInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#fef2f2',
+  },
+  centerPinLine: {
+    width: 2.5,
+    height: 18,
+    marginTop: -4,
+    backgroundColor: '#dc2626',
+    borderRadius: 1,
   },
   addButton: {
     position: 'absolute',

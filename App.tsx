@@ -16,6 +16,7 @@ import {
   fetchGossips,
   submitGossipRequest,
 } from "./src/services/gossipApi";
+import { formatFreshness } from "./src/utils/date";
 
 const mapApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 
@@ -34,7 +35,12 @@ function AppShell() {
     latitude: number;
     longitude: number;
   } | null>(null);
-  const [gossips, setGossips] = useState<Gossip[]>(mockGossips);
+  const [gossips, setGossips] = useState<Gossip[]>(() =>
+    mockGossips.map((item) => ({
+      ...item,
+      freshness: formatFreshness(item.freshness),
+    })),
+  );
 
   const openComposer = (location: { latitude: number; longitude: number }) => {
     setDraftLocation(location);
@@ -45,11 +51,15 @@ function AppShell() {
     try {
       const remote = await fetchGossips();
       if (remote.length) {
-        setGossips(remote);
+        setGossips(
+          remote.map((item) => ({
+            ...item,
+            freshness: formatFreshness(item.freshness),
+          })),
+        );
       }
     } catch (error) {
       console.error("Failed to load gossips", error);
-    } finally {
     }
   }, []);
 
