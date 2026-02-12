@@ -19,6 +19,11 @@ import { GossipCard } from '../components/GossipCard';
 const SHEET_COLLAPSED = 110;
 const SHEET_EXPANDED = Dimensions.get('window').height * 0.82;
 
+const MAP_TYPE_OPTIONS: { key: MapVisualType; label: string }[] = [
+  { key: 'standard', label: 'Map' },
+  { key: 'satellite', label: 'Satellite' },
+];
+
 export type MapTabProps = {
   gossips: Gossip[];
   mapApiKey: string;
@@ -100,6 +105,7 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
     loop.start();
     return () => loop.stop();
   }, [pulseAnim]);
+
 
   useEffect(() => {
     if (!mapApiKey || searchQuery.trim().length < 3) {
@@ -245,7 +251,7 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
           accessibilityRole="button"
           accessibilityLabel="Add new gossip"
           style={styles.addButton}
-          onPress={() => onAddRequest(region)}
+          onPress={() => onAddRequest(region ?? HYDERABAD)}
         >
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
@@ -253,54 +259,77 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
           <TextInput
             style={styles.searchInput}
             placeholder={mapApiKey ? 'Search locations' : 'Add Google Maps API key'}
-            placeholderTextColor="#94a3b8"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            returnKeyType="search"
-            editable={Boolean(mapApiKey)}
-          />
-          {searchQuery ? (
-            <TouchableOpacity style={styles.searchClear} onPress={() => setSearchQuery('')}>
-              <Text style={styles.searchClearText}>×</Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
-        {hasSuggestionOverlay ? (
-          <View style={[styles.suggestionsPanel, { top: searchBarTop + 50 }]}>
-            {searchLoading ? <Text style={styles.suggestionMeta}>Looking around…</Text> : null}
-            {searchError ? <Text style={styles.suggestionError}>{searchError}</Text> : null}
-            {suggestions.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={styles.suggestionRow}
-                onPress={() => handleSuggestionPress(item.placeId, item.description)}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.suggestionText}>{item.description}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          placeholderTextColor="#94a3b8"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          returnKeyType="search"
+          editable={Boolean(mapApiKey)}
+        />
+        {searchQuery ? (
+          <TouchableOpacity style={styles.searchClear} onPress={() => setSearchQuery('')}>
+            <Text style={styles.searchClearText}>×</Text>
+          </TouchableOpacity>
         ) : null}
-        <View style={[styles.mapTypeToggle, { top: mapTypeTop }]}>
-          {(
-            [
-              { key: 'standard', label: 'Map' },
-              { key: 'satellite', label: 'Satellite' },
-            ] as { key: MapVisualType; label: string }[]
-          ).map((option) => (
+      </View>
+      {hasSuggestionOverlay ? (
+        <View style={[styles.suggestionsPanel, { top: searchBarTop + 50 }]}>
+          {searchLoading ? <Text style={styles.suggestionMeta}>Looking around…</Text> : null}
+          {searchError ? <Text style={styles.suggestionError}>{searchError}</Text> : null}
+          {suggestions.map((item) => (
             <TouchableOpacity
-              key={option.key}
-              style={[styles.mapTypeButton, mapVisualType === option.key && styles.mapTypeButtonActive]}
-              onPress={() => setMapVisualType(option.key)}
+              key={item.id}
+              style={styles.suggestionRow}
+              onPress={() => handleSuggestionPress(item.placeId, item.description)}
               activeOpacity={0.85}
             >
-              <Text
-                style={[styles.mapTypeButtonText, mapVisualType === option.key && styles.mapTypeButtonTextActive]}
-              >
-                {option.label}
-              </Text>
+              <Text style={styles.suggestionText}>{item.description}</Text>
             </TouchableOpacity>
           ))}
+        </View>
+      ) : null}
+        <View style={[styles.mapTypeToggle, { top: mapTypeTop }]}>
+          {MAP_TYPE_OPTIONS.map((option) => {
+            const isActive = mapVisualType === option.key;
+            const primaryColor = isActive ? '#072541' : '#94a3b8';
+            const accentColor = isActive ? '#072541' : '#38bdf8';
+            return (
+              <TouchableOpacity
+                key={option.key}
+                style={[styles.mapTypeButton, isActive && styles.mapTypeButtonActive]}
+                onPress={() => setMapVisualType(option.key)}
+                activeOpacity={0.85}
+                accessibilityLabel={option.label}
+                accessibilityRole="button"
+              >
+                <View style={styles.mapTypeIcon}>
+                  {option.key === 'standard' ? (
+                    <View style={styles.foldIcon}>
+                      {[0, 1, 2].map((col) => (
+                        <View
+                          key={col}
+                          style={[
+                            styles.foldColumn,
+                            {
+                              backgroundColor: col === 1 ? accentColor : primaryColor,
+                              opacity: col === 1 ? 1 : 0.85,
+                            },
+                          ]}
+                        />
+                      ))}
+                    </View>
+                  ) : (
+                    <View style={styles.satelliteIcon}>
+                      <View style={[styles.satelliteOrbitOuter, { borderColor: accentColor }]} />
+                      <View style={[styles.satelliteOrbitInner, { borderColor: primaryColor }]} />
+                      <View style={[styles.satelliteCore, { backgroundColor: accentColor }]} />
+                      <View style={[styles.satelliteDot, styles.satelliteDotNorth, { backgroundColor: primaryColor }]} />
+                      <View style={[styles.satelliteDot, styles.satelliteDotSouth, { backgroundColor: primaryColor }]} />
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
         <TouchableOpacity
           accessibilityRole="button"
@@ -309,8 +338,10 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
           onPress={handleRecenter}
         >
           <View style={styles.recenterIcon}>
-            <View style={[styles.recenterLine, styles.recenterLineVertical]} />
-            <View style={[styles.recenterLine, styles.recenterLineHorizontal]} />
+            <View style={styles.recenterCircle}>
+              <View style={[styles.plusBar, styles.plusBarVertical]} />
+              <View style={[styles.plusBar, styles.plusBarHorizontal]} />
+            </View>
           </View>
         </TouchableOpacity>
         <View style={styles.zoomControls}>
@@ -408,7 +439,7 @@ const styles = StyleSheet.create({
     transform: [{ translateY: -24 }],
   },
   addButtonText: {
-    color: '#020617',
+    color: '#e0f2fe',
     fontSize: 28,
     fontWeight: '600',
     lineHeight: 30,
@@ -488,21 +519,68 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   mapTypeButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
     borderRadius: 999,
     backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   mapTypeButtonActive: {
     backgroundColor: '#38bdf8',
   },
-  mapTypeButtonText: {
-    color: '#94a3b8',
-    fontSize: 12,
-    fontWeight: '600',
+  mapTypeIcon: {
+    width: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  mapTypeButtonTextActive: {
-    color: '#020617',
+  foldIcon: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  foldColumn: {
+    width: 3,
+    height: 12,
+    borderRadius: 1.5,
+  },
+  satelliteIcon: {
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  satelliteOrbitOuter: {
+    position: 'absolute',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  satelliteOrbitInner: {
+    position: 'absolute',
+    width: 11,
+    height: 11,
+    borderRadius: 5.5,
+    borderWidth: 1,
+    opacity: 0.8,
+  },
+  satelliteCore: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+  },
+  satelliteDot: {
+    position: 'absolute',
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+  },
+  satelliteDotNorth: {
+    top: 1,
+  },
+  satelliteDotSouth: {
+    bottom: 1,
   },
   recenterButton: {
     position: 'absolute',
@@ -510,9 +588,9 @@ const styles = StyleSheet.create({
     top: '50%',
     marginTop: 64,
     backgroundColor: '#0b1220',
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -522,29 +600,37 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
-    transform: [{ translateY: -24 }],
+    transform: [{ translateY: -18 }],
   },
   recenterIcon: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 1.5,
-    borderColor: '#f8fafc',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  recenterLine: {
+  recenterCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: '#38bdf8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'visible',
+  },
+  plusBar: {
     position: 'absolute',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#38bdf8',
     borderRadius: 1,
   },
-  recenterLineVertical: {
-    width: 1.5,
-    height: 10,
+  plusBarVertical: {
+    width: 2,
+    height: 22,
   },
-  recenterLineHorizontal: {
-    width: 10,
-    height: 1.5,
+  plusBarHorizontal: {
+    width: 22,
+    height: 2,
   },
   zoomControls: {
     position: 'absolute',
@@ -555,9 +641,9 @@ const styles = StyleSheet.create({
     transform: [{ translateY: -24 }],
   },
   zoomButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#0b1220',
     borderWidth: 1,
     borderColor: '#1e293b',
@@ -571,9 +657,9 @@ const styles = StyleSheet.create({
   },
   zoomButtonText: {
     color: '#f8fafc',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '700',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   sheet: {
     position: 'absolute',
