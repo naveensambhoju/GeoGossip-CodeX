@@ -9,6 +9,7 @@
 
 import {setGlobalOptions} from "firebase-functions";
 import {onRequest} from "firebase-functions/https";
+import type {Response} from "express";
 import * as admin from "firebase-admin";
 
 admin.initializeApp();
@@ -37,10 +38,14 @@ type NewGossipPayload = {
   location?: {latitude: number; longitude: number} | null;
 };
 
-export const submitGossip = onRequest(async (request, response) => {
+const withCors = (response: Response) => {
   response.set("Access-Control-Allow-Origin", "*");
   response.set("Access-Control-Allow-Headers", "Content-Type");
-  response.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  response.set("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+};
+
+export const submitGossip = onRequest(async (request, response) => {
+  withCors(response);
 
   if (request.method === "OPTIONS") {
     response.status(204).send("");
@@ -76,5 +81,49 @@ export const submitGossip = onRequest(async (request, response) => {
   } catch (error) {
     console.error("submitGossip failed", error);
     response.status(500).json({error: "Failed to save gossip"});
+  }
+});
+
+export const listGossips = onRequest(async (request, response) => {
+  withCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "GET") {
+    response.status(405).json({error: "Method not allowed"});
+    return;
+  }
+
+  try {
+    const snapshot = await db
+      .collection("gossips")
+      .orderBy("createdAt", "desc")
+      .limit(50)
+      .get();
+
+    const items = snapshot.docs.map((doc) => {
+      const data = doc.data() as NewGossipPayload & {
+        createdAt?: FirebaseFirestore.Timestamp;
+      };
+
+      const createdAtIso = data.createdAt ?
+        data.createdAt.toDate().toISOString() : new Date().toISOString();
+
+      return {
+        id: doc.id,
+        title: data.subject ?? "Untitled gossip",
+        body: data.description ?? "",
+        category: data.gossipType ?? "General",
+        freshness: createdAtIso,
+      };
+    });
+
+    response.status(200).json({items});
+  } catch (error) {
+    console.error("listGossips failed", error);
+    response.status(500).json({error: "Failed to load gossips"});
   }
 });

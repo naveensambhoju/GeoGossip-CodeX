@@ -1,16 +1,19 @@
-import { useState } from 'react';
-import { SafeAreaView, StyleSheet, View } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { MapTab } from './src/screens/MapTab';
-import { GossipFeedTab } from './src/screens/GossipFeedTab';
-import { AddGossipModal, SubmitGossipForm } from './src/components/AddGossipModal';
-import { TabDock } from './src/components/TabDock';
-import { HYDERABAD, mockGossips } from './src/constants';
-import { TabKey } from './src/types';
-import { submitGossipRequest } from './src/services/gossipApi';
+import { useCallback, useEffect, useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { MapTab } from "./src/screens/MapTab";
+import { GossipFeedTab } from "./src/screens/GossipFeedTab";
+import {
+  AddGossipModal,
+  SubmitGossipForm,
+} from "./src/components/AddGossipModal";
+import { TabDock } from "./src/components/TabDock";
+import { HYDERABAD, mockGossips } from "./src/constants";
+import { Gossip, TabKey } from "./src/types";
+import { fetchGossips, submitGossipRequest } from "./src/services/gossipApi";
 
-const mapApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
+const mapApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 
 export default function App() {
   return (
@@ -21,14 +24,34 @@ export default function App() {
 }
 
 function AppShell() {
-  const [activeTab, setActiveTab] = useState<TabKey>('map');
+  const [activeTab, setActiveTab] = useState<TabKey>("map");
   const [composerVisible, setComposerVisible] = useState(false);
-  const [draftLocation, setDraftLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [draftLocation, setDraftLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [gossips, setGossips] = useState<Gossip[]>(mockGossips);
 
   const openComposer = (location: { latitude: number; longitude: number }) => {
     setDraftLocation(location);
     setComposerVisible(true);
   };
+
+  const loadGossips = useCallback(async () => {
+    try {
+      const remote = await fetchGossips();
+      if (remote.length) {
+        setGossips(remote);
+      }
+    } catch (error) {
+      console.error("Failed to load gossips", error);
+    } finally {
+    }
+  }, []);
+
+  useEffect(() => {
+    loadGossips();
+  }, [loadGossips]);
 
   const handleSubmitGossip = async (form: SubmitGossipForm) => {
     await submitGossipRequest({
@@ -38,6 +61,7 @@ function AppShell() {
       locationPreference: form.locationPreference,
       location: form.location ?? draftLocation ?? HYDERABAD,
     });
+    loadGossips();
   };
 
   return (
@@ -45,10 +69,14 @@ function AppShell() {
       <StatusBar style="light" />
       <TabDock activeTab={activeTab} onSelect={setActiveTab} />
       <View style={styles.contentArea}>
-        {activeTab === 'map' ? (
-          <MapTab gossips={mockGossips} mapApiKey={mapApiKey} onAddRequest={openComposer} />
+        {activeTab === "map" ? (
+          <MapTab
+            gossips={gossips}
+            mapApiKey={mapApiKey}
+            onAddRequest={openComposer}
+          />
         ) : null}
-        {activeTab === 'feed' ? <GossipFeedTab gossips={mockGossips} /> : null}
+        {activeTab === "feed" ? <GossipFeedTab gossips={gossips} /> : null}
       </View>
       <AddGossipModal
         visible={composerVisible}
@@ -63,7 +91,7 @@ function AppShell() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#020617',
+    backgroundColor: "#020617",
     paddingBottom: 16,
   },
   contentArea: {
