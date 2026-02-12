@@ -9,6 +9,7 @@ export type SubmitGossipForm = {
   gossipType: string;
   locationPreference: LocationPreference;
   location?: { latitude: number; longitude: number } | null;
+  expiresInHours: number;
 };
 
 type Props = {
@@ -19,6 +20,13 @@ type Props = {
 };
 
 const DEFAULT_TYPE = GOSSIP_TYPES[0] ?? 'General';
+const EXPIRY_OPTIONS = [
+  { label: '24 hrs', value: 24 },
+  { label: '12 hrs', value: 12 },
+  { label: '6 hrs', value: 6 },
+  { label: '1 hr', value: 1 },
+] as const;
+const DEFAULT_EXPIRY = 1;
 
 export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: Props) {
   const [subject, setSubject] = useState('');
@@ -28,6 +36,7 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [expiresInHours, setExpiresInHours] = useState<number>(DEFAULT_EXPIRY);
 
   useEffect(() => {
     if (!visible) {
@@ -41,6 +50,7 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
     setGossipType(DEFAULT_TYPE);
     setLocationPreference('current');
     setTypeMenuOpen(false);
+    setExpiresInHours(DEFAULT_EXPIRY);
     onClose();
   };
 
@@ -58,6 +68,7 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
         gossipType,
         locationPreference,
         location: initialLocation ?? null,
+        expiresInHours,
       });
       handleClose();
     } catch (error) {
@@ -152,6 +163,26 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
                   <Text style={styles.radioLabel}>{option.label}</Text>
                 </TouchableOpacity>
               ))}
+            </View>
+          </View>
+          <View style={styles.formField}>
+            <Text style={styles.formLabel}>Expires In</Text>
+            <View style={styles.expiryRow}>
+              {EXPIRY_OPTIONS.map((option) => {
+                const isActive = option.value === expiresInHours;
+                return (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[styles.expiryChip, isActive && styles.expiryChipActive]}
+                    onPress={() => setExpiresInHours(option.value)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.expiryChipLabel, isActive && styles.expiryChipLabelActive]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
           {submitError ? <Text style={styles.submitError}>{submitError}</Text> : null}
@@ -296,6 +327,30 @@ const styles = StyleSheet.create({
   radioLabel: {
     color: '#f8fafc',
     fontSize: 15,
+  },
+  expiryRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  expiryChip: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    alignItems: 'center',
+    backgroundColor: '#0b1220',
+  },
+  expiryChipActive: {
+    borderColor: '#38bdf8',
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+  },
+  expiryChipLabel: {
+    color: '#94a3b8',
+    fontWeight: '500',
+  },
+  expiryChipLabelActive: {
+    color: '#f8fafc',
   },
   buttonRow: {
     flexDirection: 'row',

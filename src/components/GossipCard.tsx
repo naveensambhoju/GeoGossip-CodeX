@@ -16,7 +16,10 @@ export function GossipCard({ item, actions }: Props) {
       </View>
       <Text style={styles.cardTitle}>{item.title}</Text>
       <Text style={styles.cardBody}>{item.body}</Text>
-      {actions ? <View style={styles.cardActions}>{actions}</View> : null}
+      <View style={styles.cardFooter}>
+        <View style={styles.cardActions}>{actions ?? null}</View>
+        {item.expiryLabel ? <Text style={styles.cardExpiry}>{item.expiryLabel}</Text> : null}
+      </View>
     </View>
   );
 }
@@ -50,7 +53,19 @@ const styles = StyleSheet.create({
   cardBody: {
     color: '#e2e8f0',
   },
-  cardActions: {
+  cardFooter: {
     marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  cardActions: {
+    flex: 1,
+  },
+  cardExpiry: {
+    color: '#fbbf24',
+    fontSize: 12,
+    textAlign: 'right',
   },
 });

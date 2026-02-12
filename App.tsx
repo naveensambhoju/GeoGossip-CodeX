@@ -16,7 +16,7 @@ import {
   fetchGossips,
   submitGossipRequest,
 } from "./src/services/gossipApi";
-import { formatFreshness } from "./src/utils/date";
+import { formatExpiryCountdown, formatFreshness } from "./src/utils/date";
 
 const mapApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 
@@ -39,6 +39,7 @@ function AppShell() {
     mockGossips.map((item) => ({
       ...item,
       freshness: formatFreshness(item.freshness),
+      expiryLabel: formatExpiryCountdown(item.expiresAt),
     })),
   );
 
@@ -55,6 +56,7 @@ function AppShell() {
           remote.map((item) => ({
             ...item,
             freshness: formatFreshness(item.freshness),
+            expiryLabel: formatExpiryCountdown(item.expiresAt),
           })),
         );
       }
@@ -74,6 +76,7 @@ function AppShell() {
       gossipType: form.gossipType,
       locationPreference: form.locationPreference,
       location: form.location ?? draftLocation ?? HYDERABAD,
+      expiresInHours: form.expiresInHours,
     });
     loadGossips();
   };

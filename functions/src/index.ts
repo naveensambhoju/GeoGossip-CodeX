@@ -36,6 +36,24 @@ type NewGossipPayload = {
   gossipType: string;
   locationPreference: string;
   location?: {latitude: number; longitude: number} | null;
+  expiresInHours?: number;
+};
+
+const EXPIRY_OPTIONS = [24, 12, 6, 1] as const;
+const DEFAULT_EXPIRY = 1;
+
+type ExpiryOption = (typeof EXPIRY_OPTIONS)[number];
+
+const sanitizeExpiryHours = (value: unknown): number => {
+  const numericValue = typeof value === "number" ?
+    value :
+    Number(String(value ?? ""));
+  if (!Number.isFinite(numericValue)) {
+    return DEFAULT_EXPIRY;
+  }
+  return EXPIRY_OPTIONS.includes(numericValue as ExpiryOption) ?
+    numericValue :
+    DEFAULT_EXPIRY;
 };
 
 const withCors = (response: Response) => {
@@ -69,6 +87,9 @@ export const submitGossip = onRequest(async (request, response) => {
   }
 
   try {
+    const expiresInHours = sanitizeExpiryHours(payload.expiresInHours);
+    const expiresAt = admin.firestore.Timestamp
+      .fromMillis(Date.now() + expiresInHours * 60 * 60 * 1000);
     const docRef = await db.collection("gossips").add({
       subject: payload.subject,
       description: payload.description,
@@ -76,6 +97,8 @@ export const submitGossip = onRequest(async (request, response) => {
       locationPreference: payload.locationPreference ?? "current",
       location: payload.location ?? null,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      expiresAt,
+      expiresInHours,
     });
     response.status(201).json({id: docRef.id});
   } catch (error) {
@@ -104,23 +127,43 @@ export const listGossips = onRequest(async (request, response) => {
       .limit(50)
       .get();
 
-    const items = snapshot.docs.map((doc) => {
+    const now = Date.now();
+    const items = snapshot.docs.reduce<Array<{
+      id: string;
+      title: string;
+      body: string;
+      category: string;
+      freshness: string;
+      location?: {latitude: number; longitude: number} | null;
+      expiresAt?: string | null;
+      expiresInHours?: number;
+    }>>((acc, doc) => {
       const data = doc.data() as NewGossipPayload & {
         createdAt?: FirebaseFirestore.Timestamp;
+        expiresAt?: FirebaseFirestore.Timestamp;
       };
 
-      const createdAtIso = data.createdAt ?
-        data.createdAt.toDate().toISOString() : new Date().toISOString();
+      const expiresAtDate = data.expiresAt?.toDate();
+      if (expiresAtDate && expiresAtDate.getTime() <= now) {
+        return acc;
+      }
 
-      return {
+      const createdAtIso = data.createdAt ?
+        data.createdAt.toDate().toISOString() :
+        new Date().toISOString();
+
+      acc.push({
         id: doc.id,
         title: data.subject ?? "Untitled gossip",
         body: data.description ?? "",
         category: data.gossipType ?? "General",
         freshness: createdAtIso,
         location: data.location ?? null,
-      };
-    });
+        expiresAt: expiresAtDate ? expiresAtDate.toISOString() : null,
+        expiresInHours: data.expiresInHours ?? DEFAULT_EXPIRY,
+      });
+      return acc;
+    }, []);
 
     response.status(200).json({items});
   } catch (error) {

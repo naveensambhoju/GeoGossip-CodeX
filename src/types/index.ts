@@ -5,6 +5,8 @@ export type Gossip = {
   category: string;
   freshness: string;
   location?: { latitude: number; longitude: number } | null;
+  expiresAt?: string | null;
+  expiryLabel?: string | null;
 };
 
 export type TabKey = 'map' | 'feed';

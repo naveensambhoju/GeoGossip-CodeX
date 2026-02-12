@@ -28,6 +28,7 @@ export type SubmitGossipRequest = {
   gossipType: string;
   locationPreference: string;
   location?: { latitude: number; longitude: number } | null;
+  expiresInHours: number;
 };
 
 export async function submitGossipRequest(payload: SubmitGossipRequest) {
@@ -55,6 +56,8 @@ type RemoteGossip = {
   category: string;
   freshness: string;
   location?: { latitude: number; longitude: number } | null;
+  expiresAt?: string | null;
+  expiresInHours?: number;
 };
 
 export async function fetchGossips(): Promise<RemoteGossip[]> {
