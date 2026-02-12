@@ -11,7 +11,11 @@ import {
 import { TabDock } from "./src/components/TabDock";
 import { HYDERABAD, mockGossips } from "./src/constants";
 import { Gossip, TabKey } from "./src/types";
-import { fetchGossips, submitGossipRequest } from "./src/services/gossipApi";
+import {
+  deleteGossipRequest,
+  fetchGossips,
+  submitGossipRequest,
+} from "./src/services/gossipApi";
 
 const mapApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 
@@ -64,6 +68,11 @@ function AppShell() {
     loadGossips();
   };
 
+  const handleDeleteGossip = async (id: string) => {
+    await deleteGossipRequest(id);
+    setGossips((prev) => prev.filter((item) => item.id !== id));
+  };
+
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar style="light" />
@@ -76,7 +85,9 @@ function AppShell() {
             onAddRequest={openComposer}
           />
         ) : null}
-        {activeTab === "feed" ? <GossipFeedTab gossips={gossips} /> : null}
+        {activeTab === "feed" ? (
+          <GossipFeedTab gossips={gossips} onDelete={handleDeleteGossip} />
+        ) : null}
       </View>
       <AddGossipModal
         visible={composerVisible}

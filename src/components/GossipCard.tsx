@@ -1,11 +1,13 @@
+import { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Gossip } from '../types';
 
 type Props = {
   item: Gossip;
+  actions?: ReactNode;
 };
 
-export function GossipCard({ item }: Props) {
+export function GossipCard({ item, actions }: Props) {
   return (
     <View style={styles.card}>
       <View style={styles.cardMeta}>
@@ -14,6 +16,7 @@ export function GossipCard({ item }: Props) {
       </View>
       <Text style={styles.cardTitle}>{item.title}</Text>
       <Text style={styles.cardBody}>{item.body}</Text>
+      {actions ? <View style={styles.cardActions}>{actions}</View> : null}
     </View>
   );
 }
@@ -46,5 +49,8 @@ const styles = StyleSheet.create({
   },
   cardBody: {
     color: '#e2e8f0',
+  },
+  cardActions: {
+    marginTop: 8,
   },
 });

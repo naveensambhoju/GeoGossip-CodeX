@@ -41,7 +41,7 @@ type NewGossipPayload = {
 const withCors = (response: Response) => {
   response.set("Access-Control-Allow-Origin", "*");
   response.set("Access-Control-Allow-Headers", "Content-Type");
-  response.set("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+  response.set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
 };
 
 export const submitGossip = onRequest(async (request, response) => {
@@ -126,5 +126,33 @@ export const listGossips = onRequest(async (request, response) => {
   } catch (error) {
     console.error("listGossips failed", error);
     response.status(500).json({error: "Failed to load gossips"});
+  }
+});
+
+export const deleteGossip = onRequest(async (request, response) => {
+  withCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "DELETE") {
+    response.status(405).json({error: "Method not allowed"});
+    return;
+  }
+
+  const id = (request.query.id as string) ?? (request.body?.id as string);
+  if (!id) {
+    response.status(400).json({error: "Missing id"});
+    return;
+  }
+
+  try {
+    await db.collection("gossips").doc(id).delete();
+    response.status(204).send("");
+  } catch (error) {
+    console.error("deleteGossip failed", error);
+    response.status(500).json({error: "Failed to delete gossip"});
   }
 });
