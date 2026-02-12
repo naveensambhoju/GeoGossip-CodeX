@@ -200,6 +200,20 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
             description="Prototype"
             pinColor="#bae6fd"
           />
+          {gossips
+            .filter((item) => item.location)
+            .map((item) => (
+              <Marker
+                key={`gossip-${item.id}`}
+                coordinate={{
+                  latitude: item.location!.latitude,
+                  longitude: item.location!.longitude,
+                }}
+                title={item.title}
+                description={item.body}
+                pinColor="#fbbf24"
+              />
+            ))}
         </MapView>
         <View pointerEvents="none" style={styles.centerPin}>
           <View style={styles.centerPinHead} />

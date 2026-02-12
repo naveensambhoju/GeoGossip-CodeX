@@ -118,6 +118,7 @@ export const listGossips = onRequest(async (request, response) => {
         body: data.description ?? "",
         category: data.gossipType ?? "General",
         freshness: createdAtIso,
+        location: data.location ?? null,
       };
     });
 

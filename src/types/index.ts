@@ -4,6 +4,7 @@ export type Gossip = {
   body: string;
   category: string;
   freshness: string;
+  location?: { latitude: number; longitude: number } | null;
 };
 
 export type TabKey = 'map' | 'feed';

@@ -49,6 +49,7 @@ type RemoteGossip = {
   body: string;
   category: string;
   freshness: string;
+  location?: { latitude: number; longitude: number } | null;
 };
 
 export async function fetchGossips(): Promise<RemoteGossip[]> {
