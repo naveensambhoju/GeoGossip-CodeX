@@ -357,9 +357,7 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
           <TouchableOpacity activeOpacity={0.9} style={styles.sheetHandle} onPress={toggleSheet}>
             <View style={styles.sheetGrabber} />
             <Text style={styles.sheetTitle}>{gossips.length} gossips in view</Text>
-            <Text style={styles.sheetSubtitle}>
-              {region ? `Lat ${region.latitude.toFixed(2)}, Lon ${region.longitude.toFixed(2)}` : 'Exploring Hyderabad'}
-            </Text>
+            <Text style={styles.sheetSubtitle}>Pull up to browse the latest whispers</Text>
           </TouchableOpacity>
           {sheetExpanded ? (
             <ScrollView style={styles.sheetContent} contentContainerStyle={{ paddingBottom: 24 }}>

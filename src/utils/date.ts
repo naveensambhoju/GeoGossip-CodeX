@@ -45,7 +45,7 @@ export function formatExpiryCountdown(dateString?: string | null): string | null
 
   const diffMs = expiry.getTime() - Date.now();
   if (diffMs <= 0) {
-    return 'Exp - expired';
+    return 'Expired';
   }
 
   const totalMinutes = Math.max(1, Math.round(diffMs / 60000));
@@ -53,8 +53,8 @@ export function formatExpiryCountdown(dateString?: string | null): string | null
   const minutes = totalMinutes % 60;
 
   if (hours > 0) {
-    return `Exp - ${hours}h ${minutes.toString().padStart(2, '0')}m left`;
+    return `${hours}h ${minutes.toString().padStart(2, '0')}m left`;
   }
 
-  return `Exp - ${minutes}m left`;
+  return `${minutes}m left`;
 }

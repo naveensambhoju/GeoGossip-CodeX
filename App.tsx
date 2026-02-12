@@ -35,6 +35,7 @@ function AppShell() {
     latitude: number;
     longitude: number;
   } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [gossips, setGossips] = useState<Gossip[]>(() =>
     mockGossips.map((item) => ({
       ...item,
@@ -82,8 +83,13 @@ function AppShell() {
   };
 
   const handleDeleteGossip = async (id: string) => {
-    await deleteGossipRequest(id);
-    setGossips((prev) => prev.filter((item) => item.id !== id));
+    setDeletingId(id);
+    try {
+      await deleteGossipRequest(id);
+      setGossips((prev) => prev.filter((item) => item.id !== id));
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -99,7 +105,7 @@ function AppShell() {
           />
         ) : null}
         {activeTab === "feed" ? (
-          <GossipFeedTab gossips={gossips} onDelete={handleDeleteGossip} />
+          <GossipFeedTab gossips={gossips} onDelete={handleDeleteGossip} deletingId={deletingId} />
         ) : null}
       </View>
       <AddGossipModal

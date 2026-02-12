@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { GOSSIP_TYPES } from '../constants';
 import { LocationPreference } from '../types';
 
@@ -36,6 +36,8 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [subjectTouched, setSubjectTouched] = useState(false);
+  const [descriptionTouched, setDescriptionTouched] = useState(false);
   const [expiresInHours, setExpiresInHours] = useState<number>(DEFAULT_EXPIRY);
 
   useEffect(() => {
@@ -59,6 +61,12 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
   };
 
   const handlePost = async () => {
+    setSubjectTouched(true);
+    setDescriptionTouched(true);
+    if (!subject.trim() || !description.trim()) {
+      setSubmitError('Subject and description are required.');
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -91,11 +99,14 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
           <View style={styles.formField}>
             <Text style={styles.formLabel}>Subject</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, (!subject.trim() && subjectTouched) && styles.inputError]}
               placeholder="Give it a title"
               placeholderTextColor="#475569"
               value={subject}
-              onChangeText={setSubject}
+              onChangeText={(text) => {
+                setSubject(text);
+                if (!subjectTouched) setSubjectTouched(true);
+              }}
               maxLength={100}
             />
             <Text style={styles.helperText}>{subject.length}/100</Text>
@@ -103,11 +114,14 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
           <View style={styles.formField}>
             <Text style={styles.formLabel}>Description</Text>
             <TextInput
-              style={[styles.input, styles.textarea]}
+              style={[styles.input, styles.textarea, (!description.trim() && descriptionTouched) && styles.inputError]}
               placeholder="Add more detail"
               placeholderTextColor="#475569"
               value={description}
-              onChangeText={setDescription}
+              onChangeText={(text) => {
+                setDescription(text);
+                if (!descriptionTouched) setDescriptionTouched(true);
+              }}
               maxLength={250}
               multiline
               numberOfLines={5}
@@ -191,7 +205,11 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
               <Text style={styles.secondaryButtonText}>Preview</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.primaryButton, submitting && styles.buttonDisabled]} onPress={handlePost} disabled={submitting}>
-              <Text style={styles.primaryButtonText}>{submitting ? 'Posting…' : 'Post'}</Text>
+              {submitting ? (
+                <ActivityIndicator color="#020617" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Post</Text>
+              )}
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -258,6 +276,9 @@ const styles = StyleSheet.create({
   },
   textarea: {
     height: 140,
+  },
+  inputError: {
+    borderColor: '#f87171',
   },
   helperText: {
     color: '#475569',
