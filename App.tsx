@@ -17,6 +17,8 @@ import {
   submitGossipRequest,
 } from "./src/services/gossipApi";
 import { formatExpiryCountdown, formatFreshness } from "./src/utils/date";
+import { ProfileScreen } from "./src/screens/ProfileScreen";
+import { SettingsScreen } from "./src/screens/SettingsScreen";
 
 const mapApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 
@@ -39,6 +41,7 @@ function AppShell() {
   const [repostingId, setRepostingId] = useState<string | null>(null);
   const [gossips, setGossips] = useState<Gossip[]>([]);
   const [loadingGossips, setLoadingGossips] = useState(true);
+  const [view, setView] = useState<"main" | "profile" | "settings">("main");
 
   const openComposer = (location: { latitude: number; longitude: number }) => {
     setDraftLocation(location);
@@ -114,36 +117,48 @@ function AppShell() {
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar style="light" />
-      <TabDock activeTab={activeTab} onSelect={setActiveTab} />
-      <View style={styles.contentArea}>
-        {activeTab === "map" ? (
-          <MapTab
-            gossips={gossips}
-            mapApiKey={mapApiKey}
-            onAddRequest={openComposer}
+      {view === "profile" ? (
+        <ProfileScreen
+          onClose={() => setView("main")}
+          onOpenSettings={() => setView("settings")}
+        />
+      ) : view === "settings" ? (
+        <SettingsScreen onClose={() => setView("profile")} />
+      ) : (
+        <>
+          <TabDock activeTab={activeTab} onSelect={setActiveTab} />
+          <View style={styles.contentArea}>
+            {activeTab === "map" ? (
+              <MapTab
+                gossips={gossips}
+                mapApiKey={mapApiKey}
+                onAddRequest={openComposer}
+                onProfilePress={() => setView("profile")}
+              />
+            ) : null}
+            {activeTab === "feed" ? (
+              <GossipFeedTab
+                gossips={gossips}
+                onDelete={handleDeleteGossip}
+                deletingId={deletingId}
+                onRepost={handleRepostGossip}
+                repostingId={repostingId}
+              />
+            ) : null}
+          </View>
+          {loadingGossips ? (
+            <View style={styles.globalLoader} pointerEvents="none">
+              <ActivityIndicator size="large" color="#38bdf8" />
+            </View>
+          ) : null}
+          <AddGossipModal
+            visible={composerVisible}
+            onClose={() => setComposerVisible(false)}
+            onSubmit={handleSubmitGossip}
+            initialLocation={draftLocation ?? HYDERABAD}
           />
-        ) : null}
-        {activeTab === "feed" ? (
-          <GossipFeedTab
-            gossips={gossips}
-            onDelete={handleDeleteGossip}
-            deletingId={deletingId}
-            onRepost={handleRepostGossip}
-            repostingId={repostingId}
-          />
-        ) : null}
-      </View>
-      {loadingGossips ? (
-        <View style={styles.globalLoader} pointerEvents="none">
-          <ActivityIndicator size="large" color="#38bdf8" />
-        </View>
-      ) : null}
-      <AddGossipModal
-        visible={composerVisible}
-        onClose={() => setComposerVisible(false)}
-        onSubmit={handleSubmitGossip}
-        initialLocation={draftLocation ?? HYDERABAD}
-      />
+        </>
+      )}
     </SafeAreaView>
   );
 }

@@ -29,9 +29,10 @@ export type MapTabProps = {
   gossips: Gossip[];
   mapApiKey: string;
   onAddRequest: (region: Region) => void;
+  onProfilePress?: () => void;
 };
 
-export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
+export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: MapTabProps) {
   const [region, setRegion] = useState<Region>(HYDERABAD);
   const [mapReady, setMapReady] = useState(false);
   const [mapVisualType, setMapVisualType] = useState<MapVisualType>('standard');
@@ -116,7 +117,7 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
     setRegion(nextRegion);
   };
 
-  const searchBarTop = Math.max(insets.top, 12) + 12;
+  const searchBarTop = Math.max(insets.top, 12);
   const hasSuggestionOverlay = Boolean(mapApiKey && (suggestions.length > 0 || searchLoading || searchError));
   const mapTypeTop = hasSuggestionOverlay ? searchBarTop + 180 : searchBarTop + 52;
 
@@ -288,22 +289,27 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
         >
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
-        <View style={[styles.searchBar, { top: searchBarTop }] }>
-          <TextInput
-            style={styles.searchInput}
-            placeholder={mapApiKey ? 'Search locations' : 'Add Google Maps API key'}
-          placeholderTextColor="#94a3b8"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          returnKeyType="search"
-          editable={Boolean(mapApiKey)}
-        />
-        {searchQuery ? (
-          <TouchableOpacity style={styles.searchClear} onPress={() => setSearchQuery('')}>
-            <Text style={styles.searchClearText}>×</Text>
+        <View style={[styles.searchRow, { top: searchBarTop }]}>
+          <View style={styles.searchBar}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder={mapApiKey ? 'Search locations' : 'Add Google Maps API key'}
+              placeholderTextColor="#94a3b8"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
+              editable={Boolean(mapApiKey)}
+            />
+            {searchQuery ? (
+              <TouchableOpacity style={styles.searchClear} onPress={() => setSearchQuery('')}>
+                <Text style={styles.searchClearText}>×</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+          <TouchableOpacity style={styles.profileButton} onPress={onProfilePress}>
+            <Text style={styles.profileInitial}>NS</Text>
           </TouchableOpacity>
-        ) : null}
-      </View>
+        </View>
       {hasSuggestionOverlay ? (
         <View style={[styles.suggestionsPanel, { top: searchBarTop + 50 }]}>
           {searchLoading ? <Text style={styles.suggestionMeta}>Looking around…</Text> : null}
@@ -481,10 +487,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 30,
   },
-  searchBar: {
+  searchRow: {
     position: 'absolute',
     left: 24,
     right: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#0b1220cc',
@@ -493,6 +504,7 @@ const styles = StyleSheet.create({
     borderColor: '#1e293b',
     paddingHorizontal: 14,
     height: 44,
+    flex: 1,
   },
   searchInput: {
     flex: 1,
@@ -512,6 +524,20 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     fontSize: 16,
     lineHeight: 16,
+  },
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#1e293b',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  profileInitial: {
+    color: '#f8fafc',
+    fontWeight: '700',
   },
   suggestionsPanel: {
     position: 'absolute',
