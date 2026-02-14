@@ -19,7 +19,7 @@ import { GOSSIP_TYPES, HYDERABAD } from '../constants';
 import { GossipCard } from '../components/GossipCard';
 import { ThemePalette, useTheme } from '../theme';
 
-const SHEET_COLLAPSED = 110;
+const SHEET_COLLAPSED = 70;
 const SHEET_EXPANDED = Dimensions.get('window').height * 0.82;
 
 const MAP_TYPE_OPTIONS: { key: MapVisualType; label: string }[] = [
@@ -65,8 +65,15 @@ export function MapTab({
   const webMapProps: Record<string, unknown> = Platform.OS === 'web' ? { googleMapsApiKey: mapApiKey } : {};
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const searchBarTop = Math.max(insets.top, 12);
   const filterOptions = useMemo(() => ['All', ...GOSSIP_TYPES], []);
   const searchPlaceholder = palette.textSecondary;
+  const expandedHeight = useMemo(() => {
+    const windowHeight = Dimensions.get('window').height;
+    const reservedSpace = searchBarTop + 70;
+    const computed = windowHeight - reservedSpace;
+    return Math.max(SHEET_COLLAPSED + 80, Math.min(windowHeight - 40, computed));
+  }, [searchBarTop]);
 
   useEffect(() => {
     setViewportLoading(true);
@@ -99,9 +106,15 @@ export function MapTab({
     return () => clearTimeout(timer);
   }, [gossips, region]);
 
+  useEffect(() => {
+    const target = sheetExpanded ? expandedHeight : SHEET_COLLAPSED;
+    sheetCurrentHeight.current = target;
+    sheetHeight.setValue(target);
+  }, [expandedHeight]);  
+
   const animateSheetTo = useCallback(
     (expand: boolean) => {
-      const target = expand ? SHEET_EXPANDED : SHEET_COLLAPSED;
+      const target = expand ? expandedHeight : SHEET_COLLAPSED;
       setSheetExpanded(expand);
       sheetCurrentHeight.current = target;
       Animated.spring(sheetHeight, {
@@ -126,10 +139,10 @@ export function MapTab({
   };
 
   const finalizeSheetPosition = useCallback(() => {
-    const halfway = (SHEET_COLLAPSED + SHEET_EXPANDED) / 2;
+    const halfway = (SHEET_COLLAPSED + expandedHeight) / 2;
     const shouldExpand = sheetCurrentHeight.current > halfway;
     animateSheetTo(shouldExpand);
-  }, [animateSheetTo]);
+  }, [animateSheetTo, expandedHeight]);
 
   const panResponder = useMemo(
     () =>
@@ -140,7 +153,7 @@ export function MapTab({
         },
         onPanResponderMove: (_, gesture) => {
           const nextHeight = Math.min(
-            SHEET_EXPANDED,
+            expandedHeight,
             Math.max(SHEET_COLLAPSED, sheetStartHeight.current - gesture.dy),
           );
           sheetHeight.setValue(nextHeight);
@@ -149,7 +162,7 @@ export function MapTab({
         onPanResponderRelease: finalizeSheetPosition,
         onPanResponderTerminate: finalizeSheetPosition,
       }),
-    [finalizeSheetPosition, sheetHeight],
+    [finalizeSheetPosition, sheetHeight, expandedHeight],
   );
 
   const clampDelta = (value: number) => {
@@ -172,7 +185,6 @@ export function MapTab({
     setRegion(nextRegion);
   };
 
-  const searchBarTop = Math.max(insets.top, 12);
   const hasSuggestionOverlay = Boolean(mapApiKey && (suggestions.length > 0 || searchLoading || searchError));
   const filterRowTop = searchBarTop + 60;
   const mapTypeTop = hasSuggestionOverlay ? filterRowTop + 150 : filterRowTop + 52;
