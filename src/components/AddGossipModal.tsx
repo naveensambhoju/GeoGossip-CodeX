@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { GOSSIP_TYPES } from '../constants';
 import { LocationPreference } from '../types';
+import { ThemePalette, useTheme } from '../theme';
 
 export type SubmitGossipForm = {
   subject: string;
@@ -39,6 +40,9 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
   const [subjectTouched, setSubjectTouched] = useState(false);
   const [descriptionTouched, setDescriptionTouched] = useState(false);
   const [expiresInHours, setExpiresInHours] = useState<number>(DEFAULT_EXPIRY);
+  const { palette } = useTheme();
+  const styles = useMemo(() => createStyles(palette), [palette]);
+  const placeholderColor = palette.textSecondary;
 
   useEffect(() => {
     if (!visible) {
@@ -101,7 +105,7 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
             <TextInput
               style={[styles.input, (!subject.trim() && subjectTouched) && styles.inputError]}
               placeholder="Give it a title"
-              placeholderTextColor="#475569"
+              placeholderTextColor={placeholderColor}
               value={subject}
               onChangeText={(text) => {
                 setSubject(text);
@@ -116,7 +120,7 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
             <TextInput
               style={[styles.input, styles.textarea, (!description.trim() && descriptionTouched) && styles.inputError]}
               placeholder="Add more detail"
-              placeholderTextColor="#475569"
+              placeholderTextColor={placeholderColor}
               value={description}
               onChangeText={(text) => {
                 setDescription(text);
@@ -206,7 +210,7 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
             </TouchableOpacity>
             <TouchableOpacity style={[styles.primaryButton, submitting && styles.buttonDisabled]} onPress={handlePost} disabled={submitting}>
               {submitting ? (
-                <ActivityIndicator color="#020617" />
+                <ActivityIndicator color={palette.accentContrast} />
               ) : (
                 <Text style={styles.primaryButtonText}>Post</Text>
               )}
@@ -218,195 +222,196 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
   );
 }
 
-const styles = StyleSheet.create({
-  modalSafeArea: {
-    flex: 1,
-    backgroundColor: '#020617',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  modalTitle: {
-    color: '#f8fafc',
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  modalCloseButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalCloseText: {
-    color: '#94a3b8',
-    fontSize: 22,
-    lineHeight: 22,
-    marginTop: -2,
-  },
-  modalContent: {
-    paddingBottom: 48,
-    gap: 16,
-  },
-  formField: {
-    gap: 6,
-  },
-  formLabel: {
-    color: '#94a3b8',
-    fontSize: 13,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  input: {
-    backgroundColor: '#0b1220',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: '#f8fafc',
-    fontSize: 15,
-  },
-  textarea: {
-    height: 140,
-  },
-  inputError: {
-    borderColor: '#f87171',
-  },
-  helperText: {
-    color: '#475569',
-    fontSize: 12,
-    textAlign: 'right',
-  },
-  dropdown: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#0b1220',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  dropdownText: {
-    color: '#f8fafc',
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  dropdownCaret: {
-    color: '#94a3b8',
-    fontSize: 12,
-  },
-  dropdownList: {
-    marginTop: 6,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    backgroundColor: '#0b1220',
-    overflow: 'hidden',
-  },
-  dropdownOption: {
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-  },
-  dropdownOptionText: {
-    color: '#f8fafc',
-    fontSize: 15,
-  },
-  radioGroup: {
-    gap: 8,
-  },
-  radioRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 6,
-  },
-  radioOuter: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 2,
-    borderColor: '#38bdf8',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioInner: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#38bdf8',
-  },
-  radioLabel: {
-    color: '#f8fafc',
-    fontSize: 15,
-  },
-  expiryRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  expiryChip: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    alignItems: 'center',
-    backgroundColor: '#0b1220',
-  },
-  expiryChipActive: {
-    borderColor: '#38bdf8',
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
-  },
-  expiryChipLabel: {
-    color: '#94a3b8',
-    fontWeight: '500',
-  },
-  expiryChipLabelActive: {
-    color: '#f8fafc',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-  secondaryButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: '#f8fafc',
-    fontWeight: '600',
-  },
-  primaryButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
-    backgroundColor: '#38bdf8',
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    color: '#020617',
-    fontWeight: '700',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  submitError: {
-    color: '#f87171',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-});
+const createStyles = (palette: ThemePalette) =>
+  StyleSheet.create({
+    modalSafeArea: {
+      flex: 1,
+      backgroundColor: palette.background,
+      paddingHorizontal: 16,
+      paddingBottom: 16,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+    },
+    modalTitle: {
+      color: palette.textPrimary,
+      fontSize: 20,
+      fontWeight: '600',
+    },
+    modalCloseButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: palette.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    modalCloseText: {
+      color: palette.textSecondary,
+      fontSize: 22,
+      lineHeight: 22,
+      marginTop: -2,
+    },
+    modalContent: {
+      paddingBottom: 48,
+      gap: 16,
+    },
+    formField: {
+      gap: 6,
+    },
+    formLabel: {
+      color: palette.textSecondary,
+      fontSize: 13,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+    },
+    input: {
+      backgroundColor: palette.surface,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: palette.border,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      color: palette.textPrimary,
+      fontSize: 15,
+    },
+    textarea: {
+      height: 140,
+    },
+    helperText: {
+      color: palette.textSecondary,
+      fontSize: 12,
+      textAlign: 'right',
+    },
+    dropdown: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: palette.surface,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: palette.border,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+    },
+    dropdownText: {
+      color: palette.textPrimary,
+      fontSize: 15,
+      fontWeight: '500',
+    },
+    dropdownCaret: {
+      color: palette.textSecondary,
+      fontSize: 12,
+    },
+    dropdownList: {
+      marginTop: 6,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: palette.border,
+      backgroundColor: palette.surface,
+      overflow: 'hidden',
+    },
+    dropdownOption: {
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+    },
+    dropdownOptionText: {
+      color: palette.textPrimary,
+      fontSize: 15,
+    },
+    radioGroup: {
+      gap: 8,
+    },
+    radioRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingVertical: 6,
+    },
+    radioOuter: {
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      borderWidth: 2,
+      borderColor: palette.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    radioInner: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: palette.accent,
+    },
+    radioLabel: {
+      color: palette.textPrimary,
+      fontSize: 15,
+    },
+    buttonRow: {
+      flexDirection: 'row',
+      gap: 12,
+      marginTop: 8,
+    },
+    secondaryButton: {
+      flex: 1,
+      paddingVertical: 14,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: palette.border,
+      alignItems: 'center',
+    },
+    secondaryButtonText: {
+      color: palette.textPrimary,
+      fontWeight: '600',
+    },
+    primaryButton: {
+      flex: 1,
+      paddingVertical: 14,
+      borderRadius: 14,
+      backgroundColor: palette.accent,
+      alignItems: 'center',
+    },
+    primaryButtonText: {
+      color: palette.accentContrast,
+      fontWeight: '700',
+    },
+    buttonDisabled: {
+      opacity: 0.6,
+    },
+    submitError: {
+      color: palette.danger,
+      textAlign: 'center',
+      marginBottom: 8,
+    },
+    expiryRow: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    expiryChip: {
+      flex: 1,
+      paddingVertical: 10,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: palette.border,
+      alignItems: 'center',
+      backgroundColor: palette.surface,
+    },
+    expiryChipActive: {
+      borderColor: palette.accent,
+      backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    },
+    expiryChipLabel: {
+      color: palette.textSecondary,
+      fontWeight: '500',
+    },
+    expiryChipLabelActive: {
+      color: palette.textPrimary,
+    },
+    inputError: {
+      borderColor: palette.danger,
+    },
+  });

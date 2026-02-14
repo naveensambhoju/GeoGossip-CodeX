@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import {
   ActivityIndicator,
@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gossip, MapVisualType, PlaceSuggestion } from '../types';
 import { HYDERABAD } from '../constants';
 import { GossipCard } from '../components/GossipCard';
+import { ThemePalette, useTheme } from '../theme';
 
 const SHEET_COLLAPSED = 110;
 const SHEET_EXPANDED = Dimensions.get('window').height * 0.82;
@@ -50,6 +51,9 @@ export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: Map
   const sheetHeight = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
   const mapRef = useRef<MapView | null>(null);
   const webMapProps: Record<string, unknown> = Platform.OS === 'web' ? { googleMapsApiKey: mapApiKey } : {};
+  const { palette } = useTheme();
+  const styles = useMemo(() => createStyles(palette), [palette]);
+  const searchPlaceholder = palette.textSecondary;
 
   useEffect(() => {
     setViewportLoading(true);
@@ -297,7 +301,7 @@ export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: Map
             <TextInput
               style={styles.searchInput}
               placeholder={mapApiKey ? 'Search locations' : 'Add Google Maps API key'}
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor={searchPlaceholder}
               value={searchQuery}
               onChangeText={setSearchQuery}
               returnKeyType="search"
@@ -313,27 +317,27 @@ export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: Map
             <Text style={styles.profileInitial}>NS</Text>
           </TouchableOpacity>
         </View>
-      {hasSuggestionOverlay ? (
-        <View style={[styles.suggestionsPanel, { top: searchBarTop + 50 }]}>
-          {searchLoading ? <Text style={styles.suggestionMeta}>Looking around…</Text> : null}
-          {searchError ? <Text style={styles.suggestionError}>{searchError}</Text> : null}
-          {suggestions.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.suggestionRow}
-              onPress={() => handleSuggestionPress(item.placeId, item.description)}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.suggestionText}>{item.description}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      ) : null}
+        {hasSuggestionOverlay ? (
+          <View style={[styles.suggestionsPanel, { top: searchBarTop + 50 }]}>
+            {searchLoading ? <Text style={styles.suggestionMeta}>Looking around…</Text> : null}
+            {searchError ? <Text style={styles.suggestionError}>{searchError}</Text> : null}
+            {suggestions.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.suggestionRow}
+                onPress={() => handleSuggestionPress(item.placeId, item.description)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.suggestionText}>{item.description}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
         <View style={[styles.mapTypeToggle, { top: mapTypeTop }]}>
           {MAP_TYPE_OPTIONS.map((option) => {
             const isActive = mapVisualType === option.key;
-            const primaryColor = isActive ? '#072541' : '#94a3b8';
-            const accentColor = isActive ? '#072541' : '#38bdf8';
+            const iconPrimary = isActive ? palette.accentContrast : palette.textSecondary;
+            const iconAccent = isActive ? palette.accentContrast : palette.accent;
             return (
               <TouchableOpacity
                 key={option.key}
@@ -352,7 +356,7 @@ export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: Map
                           style={[
                             styles.foldColumn,
                             {
-                              backgroundColor: col === 1 ? accentColor : primaryColor,
+                              backgroundColor: col === 1 ? iconAccent : iconPrimary,
                               opacity: col === 1 ? 1 : 0.85,
                             },
                           ]}
@@ -361,11 +365,11 @@ export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: Map
                     </View>
                   ) : (
                     <View style={styles.satelliteIcon}>
-                      <View style={[styles.satelliteOrbitOuter, { borderColor: accentColor }]} />
-                      <View style={[styles.satelliteOrbitInner, { borderColor: primaryColor }]} />
-                      <View style={[styles.satelliteCore, { backgroundColor: accentColor }]} />
-                      <View style={[styles.satelliteDot, styles.satelliteDotNorth, { backgroundColor: primaryColor }]} />
-                      <View style={[styles.satelliteDot, styles.satelliteDotSouth, { backgroundColor: primaryColor }]} />
+                      <View style={[styles.satelliteOrbitOuter, { borderColor: iconAccent }]} />
+                      <View style={[styles.satelliteOrbitInner, { borderColor: iconPrimary }]} />
+                      <View style={[styles.satelliteCore, { backgroundColor: iconAccent }]} />
+                      <View style={[styles.satelliteDot, styles.satelliteDotNorth, { backgroundColor: iconPrimary }]} />
+                      <View style={[styles.satelliteDot, styles.satelliteDotSouth, { backgroundColor: iconPrimary }]} />
                     </View>
                   )}
                 </View>
@@ -400,7 +404,7 @@ export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: Map
             <View style={styles.sheetGrabber} />
             <View style={styles.sheetTitleRow}>
               {viewportLoading ? (
-                <ActivityIndicator size="small" color="#38bdf8" />
+                <ActivityIndicator size="small" color={palette.accent} />
               ) : (
                 <Text style={styles.sheetTitle}>{visibleGossips.length} gossips in view</Text>
               )}
@@ -423,13 +427,14 @@ export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: Map
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemePalette) =>
+  StyleSheet.create({
   mapWrapper: {
     flex: 1,
     borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: palette.border,
     position: 'relative',
   },
   centerPin: {
@@ -471,7 +476,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 24,
     top: '50%',
-    backgroundColor: '#38bdf8',
+    backgroundColor: palette.accent,
     width: 48,
     height: 48,
     borderRadius: 24,
@@ -485,7 +490,7 @@ const styles = StyleSheet.create({
     transform: [{ translateY: -24 }],
   },
   addButtonText: {
-    color: '#e0f2fe',
+    color: palette.accentContrast,
     fontSize: 28,
     fontWeight: '600',
     lineHeight: 30,
@@ -501,17 +506,17 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0b1220cc',
+    backgroundColor: palette.searchBackground,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: palette.border,
     paddingHorizontal: 14,
     height: 44,
     flex: 1,
   },
   searchInput: {
     flex: 1,
-    color: '#f8fafc',
+    color: palette.textPrimary,
     fontSize: 15,
   },
   searchClear: {
@@ -521,10 +526,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: palette.searchClearBackground,
   },
   searchClearText: {
-    color: '#94a3b8',
+    color: palette.textSecondary,
     fontSize: 16,
     lineHeight: 16,
   },
@@ -532,24 +537,24 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#1e293b',
+    backgroundColor: palette.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: palette.border,
   },
   profileInitial: {
-    color: '#f8fafc',
+    color: palette.textPrimary,
     fontWeight: '700',
   },
   suggestionsPanel: {
     position: 'absolute',
     left: 24,
     right: 24,
-    backgroundColor: '#0b1220f2',
+    backgroundColor: palette.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: palette.border,
     paddingVertical: 6,
     maxHeight: 240,
   },
@@ -558,17 +563,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   suggestionText: {
-    color: '#f8fafc',
+    color: palette.textPrimary,
     fontSize: 14,
   },
   suggestionMeta: {
-    color: '#94a3b8',
+    color: palette.textSecondary,
     fontSize: 12,
     paddingHorizontal: 14,
     paddingVertical: 4,
   },
   suggestionError: {
-    color: '#f87171',
+    color: palette.danger,
     fontSize: 12,
     paddingHorizontal: 14,
     paddingVertical: 4,
@@ -577,10 +582,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 24,
     flexDirection: 'row',
-    backgroundColor: '#0b1220cc',
+    backgroundColor: palette.surface,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: palette.border,
     padding: 4,
     gap: 4,
   },
@@ -593,7 +598,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   mapTypeButtonActive: {
-    backgroundColor: '#38bdf8',
+    backgroundColor: palette.accent,
   },
   mapTypeIcon: {
     width: 18,
@@ -653,14 +658,14 @@ const styles = StyleSheet.create({
     right: 24,
     top: '50%',
     marginTop: 64,
-    backgroundColor: '#0b1220',
+    backgroundColor: palette.surface,
     width: 36,
     height: 36,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: palette.border,
     shadowColor: '#000',
     shadowOpacity: 0.15,
     shadowRadius: 4,
@@ -680,14 +685,14 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 9,
     borderWidth: 2,
-    borderColor: '#38bdf8',
+    borderColor: palette.accent,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'visible',
   },
   plusBar: {
     position: 'absolute',
-    backgroundColor: '#38bdf8',
+    backgroundColor: palette.accent,
     borderRadius: 1,
   },
   plusBarVertical: {
@@ -710,9 +715,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#0b1220',
+    backgroundColor: palette.surface,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: palette.border,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -722,7 +727,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   zoomButtonText: {
-    color: '#f8fafc',
+    color: palette.textPrimary,
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 18,
@@ -732,11 +737,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#020617ee',
+    backgroundColor: palette.sheetBackground,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: palette.border,
     paddingHorizontal: 16,
     paddingTop: 12,
   },
@@ -748,11 +753,11 @@ const styles = StyleSheet.create({
     width: 60,
     height: 4,
     borderRadius: 999,
-    backgroundColor: '#1e293b',
+    backgroundColor: palette.border,
     marginBottom: 6,
   },
   sheetTitle: {
-    color: '#f8fafc',
+    color: palette.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -762,7 +767,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   sheetSubtitle: {
-    color: '#94a3b8',
+    color: palette.textSecondary,
     fontSize: 12,
   },
   sheetContent: {
@@ -770,8 +775,8 @@ const styles = StyleSheet.create({
   },
   warning: {
     textAlign: 'center',
-    color: '#fbbf24',
+    color: palette.accent,
     fontSize: 12,
     marginTop: 8,
   },
-});
+  });

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -19,18 +19,27 @@ import {
 import { formatExpiryCountdown, formatFreshness } from "./src/utils/date";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { SettingsScreen } from "./src/screens/SettingsScreen";
+import { ThemeName, ThemePalette, ThemeProvider, useTheme } from "./src/theme";
 
 const mapApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 
 export default function App() {
+  const [theme, setTheme] = useState<ThemeName>("dark");
   return (
     <SafeAreaProvider>
-      <AppShell />
+      <ThemeProvider theme={theme} setTheme={setTheme}>
+        <AppShell theme={theme} setTheme={setTheme} />
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
 
-function AppShell() {
+type AppShellProps = {
+  theme: ThemeName;
+  setTheme: (theme: ThemeName) => void;
+};
+
+function AppShell({ theme, setTheme }: AppShellProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("map");
   const [composerVisible, setComposerVisible] = useState(false);
   const [draftLocation, setDraftLocation] = useState<{
@@ -43,6 +52,8 @@ function AppShell() {
   const [allGossips, setAllGossips] = useState<Gossip[]>([]);
   const [loadingGossips, setLoadingGossips] = useState(true);
   const [view, setView] = useState<"main" | "profile" | "settings">("main");
+  const { palette } = useTheme();
+  const styles = useMemo(() => createStyles(palette), [palette]);
 
   const openComposer = (location: { latitude: number; longitude: number }) => {
     setDraftLocation(location);
@@ -131,7 +142,11 @@ function AppShell() {
           onOpenSettings={() => setView("settings")}
         />
       ) : view === "settings" ? (
-        <SettingsScreen onClose={() => setView("profile")} />
+        <SettingsScreen
+          onClose={() => setView("profile")}
+          theme={theme}
+          onChangeTheme={(next) => setTheme(next)}
+        />
       ) : (
         <>
           <TabDock activeTab={activeTab} onSelect={setActiveTab} />
@@ -171,24 +186,25 @@ function AppShell() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: "#020617",
-    paddingBottom: 16,
-  },
-  contentArea: {
-    flex: 1,
-    paddingBottom: 96,
-  },
-  globalLoader: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(2, 6, 23, 0.4)",
-  },
-});
+const createStyles = (palette: ThemePalette) =>
+  StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: palette.background,
+      paddingBottom: 16,
+    },
+    contentArea: {
+      flex: 1,
+      paddingBottom: 96,
+    },
+    globalLoader: {
+      position: "absolute",
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: palette.overlay,
+    },
+  });
