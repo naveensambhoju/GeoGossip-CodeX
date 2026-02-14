@@ -62,11 +62,20 @@ type RemoteGossip = {
   locationPreference?: string;
 };
 
-export async function fetchGossips(options?: { includeExpired?: boolean }): Promise<RemoteGossip[]> {
-  const includeParam = options?.includeExpired
-    ? `${listEndpoint}${listEndpoint.includes('?') ? '&' : '?'}includeExpired=true`
-    : listEndpoint;
-  const response = await fetch(includeParam);
+type FetchOptions = {
+  includeExpired?: boolean;
+  category?: string;
+};
+
+export async function fetchGossips(options?: FetchOptions): Promise<RemoteGossip[]> {
+  const url = new URL(listEndpoint);
+  if (options?.includeExpired) {
+    url.searchParams.set('includeExpired', 'true');
+  }
+  if (options?.category && options.category !== 'All') {
+    url.searchParams.set('type', options.category);
+  }
+  const response = await fetch(url.toString());
 
   if (!response.ok) {
     const errorBody = await response.text();

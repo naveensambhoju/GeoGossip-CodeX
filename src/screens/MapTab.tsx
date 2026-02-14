@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gossip, MapVisualType, PlaceSuggestion } from '../types';
-import { HYDERABAD } from '../constants';
+import { GOSSIP_TYPES, HYDERABAD } from '../constants';
 import { GossipCard } from '../components/GossipCard';
 import { ThemePalette, useTheme } from '../theme';
 
@@ -31,9 +31,18 @@ export type MapTabProps = {
   mapApiKey: string;
   onAddRequest: (region: Region) => void;
   onProfilePress?: () => void;
+  selectedFilter: string;
+  onFilterChange: (value: string) => void;
 };
 
-export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: MapTabProps) {
+export function MapTab({
+  gossips,
+  mapApiKey,
+  onAddRequest,
+  onProfilePress,
+  selectedFilter,
+  onFilterChange,
+}: MapTabProps) {
   const [region, setRegion] = useState<Region>(HYDERABAD);
   const [mapReady, setMapReady] = useState(false);
   const [mapVisualType, setMapVisualType] = useState<MapVisualType>('standard');
@@ -53,6 +62,7 @@ export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: Map
   const webMapProps: Record<string, unknown> = Platform.OS === 'web' ? { googleMapsApiKey: mapApiKey } : {};
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const filterOptions = useMemo(() => ['All', ...GOSSIP_TYPES], []);
   const searchPlaceholder = palette.textSecondary;
 
   useEffect(() => {
@@ -126,7 +136,8 @@ export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: Map
 
   const searchBarTop = Math.max(insets.top, 12);
   const hasSuggestionOverlay = Boolean(mapApiKey && (suggestions.length > 0 || searchLoading || searchError));
-  const mapTypeTop = hasSuggestionOverlay ? searchBarTop + 180 : searchBarTop + 52;
+  const filterRowTop = searchBarTop + 60;
+  const mapTypeTop = hasSuggestionOverlay ? filterRowTop + 150 : filterRowTop + 52;
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -310,6 +321,33 @@ export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: Map
           <TouchableOpacity style={styles.profileButton} onPress={onProfilePress}>
             <Text style={styles.profileInitial}>NS</Text>
           </TouchableOpacity>
+        </View>
+        <View style={[styles.filterRow, { top: filterRowTop }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterScrollContent}
+          >
+            {filterOptions.map((option) => {
+              const isActive = option === selectedFilter;
+              return (
+                <TouchableOpacity
+                  key={option}
+                  style={[styles.filterChip, isActive && styles.filterChipActive]}
+                  onPress={() => {
+                    if (option !== selectedFilter) {
+                      onFilterChange(option);
+                    }
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={[styles.filterChipLabel, isActive && styles.filterChipLabelActive]}>
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
         </View>
         {hasSuggestionOverlay ? (
           <View style={[styles.suggestionsPanel, { top: searchBarTop + 50 }]}>
@@ -540,6 +578,35 @@ const createStyles = (palette: ThemePalette) =>
   profileInitial: {
     color: palette.textPrimary,
     fontWeight: '700',
+  },
+  filterRow: {
+    position: 'absolute',
+    left: 24,
+    right: 24,
+  },
+  filterScrollContent: {
+    paddingVertical: 4,
+    gap: 8,
+  },
+  filterChip: {
+    backgroundColor: palette.surface,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: palette.border,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  filterChipActive: {
+    backgroundColor: palette.accent,
+    borderColor: palette.accent,
+  },
+  filterChipLabel: {
+    color: palette.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  filterChipLabelActive: {
+    color: palette.accentContrast,
   },
   suggestionsPanel: {
     position: 'absolute',

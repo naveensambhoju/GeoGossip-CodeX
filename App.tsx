@@ -51,6 +51,7 @@ function AppShell({ theme, setTheme }: AppShellProps) {
   const [activeGossips, setActiveGossips] = useState<Gossip[]>([]);
   const [allGossips, setAllGossips] = useState<Gossip[]>([]);
   const [loadingGossips, setLoadingGossips] = useState(true);
+  const [mapFilter, setMapFilter] = useState<string>("All");
   const [view, setView] = useState<"main" | "profile" | "settings">("main");
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
@@ -60,11 +61,14 @@ function AppShell({ theme, setTheme }: AppShellProps) {
     setComposerVisible(true);
   };
 
-  const loadGossips = useCallback(async () => {
+  const loadGossips = useCallback(async (filterOverride?: string) => {
     setLoadingGossips(true);
     try {
+      const targetFilter = filterOverride ?? mapFilter;
+      const categoryFilter =
+        targetFilter && targetFilter !== "All" ? targetFilter : undefined;
       const [remoteActive, remoteAll] = await Promise.all([
-        fetchGossips(),
+        fetchGossips({ category: categoryFilter }),
         fetchGossips({ includeExpired: true }),
       ]);
 
@@ -85,11 +89,11 @@ function AppShell({ theme, setTheme }: AppShellProps) {
     } finally {
       setLoadingGossips(false);
     }
-  }, []);
+  }, [mapFilter]);
 
   useEffect(() => {
-    loadGossips();
-  }, [loadGossips]);
+    loadGossips(mapFilter);
+  }, [loadGossips, mapFilter]);
 
   const handleSubmitGossip = async (form: SubmitGossipForm) => {
     await submitGossipRequest({
@@ -157,6 +161,8 @@ function AppShell({ theme, setTheme }: AppShellProps) {
                 mapApiKey={mapApiKey}
                 onAddRequest={openComposer}
                 onProfilePress={() => setView("profile")}
+                selectedFilter={mapFilter}
+                onFilterChange={setMapFilter}
               />
             ) : null}
             {activeTab === "feed" ? (

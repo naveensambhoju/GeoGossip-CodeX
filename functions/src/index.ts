@@ -122,8 +122,14 @@ export const listGossips = onRequest(async (request, response) => {
 
   try {
     const includeExpired = request.query.includeExpired === "true";
-    const snapshot = await db
-      .collection("gossips")
+    const requestedType = typeof request.query.type === "string" ?
+      request.query.type :
+      undefined;
+    const normalizedType = requestedType && requestedType !== "All" ?
+      requestedType :
+      undefined;
+
+    const snapshot = await db.collection("gossips")
       .orderBy("createdAt", "desc")
       .limit(50)
       .get();
@@ -145,6 +151,10 @@ export const listGossips = onRequest(async (request, response) => {
         createdAt?: FirebaseFirestore.Timestamp;
         expiresAt?: FirebaseFirestore.Timestamp;
       };
+
+      if (normalizedType && data.gossipType !== normalizedType) {
+        return acc;
+      }
 
       const expiresAtDate = data.expiresAt?.toDate();
       const isExpired = expiresAtDate ? expiresAtDate.getTime() <= now : false;
