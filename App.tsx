@@ -9,7 +9,7 @@ import {
   SubmitGossipForm,
 } from "./src/components/AddGossipModal";
 import { TabDock } from "./src/components/TabDock";
-import { HYDERABAD, mockGossips } from "./src/constants";
+import { HYDERABAD } from "./src/constants";
 import { Gossip, TabKey } from "./src/types";
 import {
   deleteGossipRequest,
@@ -36,13 +36,8 @@ function AppShell() {
     longitude: number;
   } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [gossips, setGossips] = useState<Gossip[]>(() =>
-    mockGossips.map((item) => ({
-      ...item,
-      freshness: formatFreshness(item.freshness),
-      expiryLabel: formatExpiryCountdown(item.expiresAt),
-    })),
-  );
+  const [repostingId, setRepostingId] = useState<string | null>(null);
+  const [gossips, setGossips] = useState<Gossip[]>([]);
 
   const openComposer = (location: { latitude: number; longitude: number }) => {
     setDraftLocation(location);
@@ -52,15 +47,16 @@ function AppShell() {
   const loadGossips = useCallback(async () => {
     try {
       const remote = await fetchGossips();
-      if (remote.length) {
-        setGossips(
-          remote.map((item) => ({
-            ...item,
-            freshness: formatFreshness(item.freshness),
-            expiryLabel: formatExpiryCountdown(item.expiresAt),
-          })),
-        );
-      }
+      setGossips(
+        remote.map((item) => ({
+          ...item,
+          freshness: formatFreshness(item.freshness),
+          expiryLabel: item.expired ? 'Expired' : formatExpiryCountdown(item.expiresAt),
+          expiresInHours: item.expiresInHours,
+          expired: item.expired ?? false,
+          locationPreference: item.locationPreference ?? null,
+        })),
+      );
     } catch (error) {
       console.error("Failed to load gossips", error);
     }
@@ -92,6 +88,25 @@ function AppShell() {
     }
   };
 
+  const handleRepostGossip = async (id: string) => {
+    const target = gossips.find((item) => item.id === id);
+    if (!target) return;
+    setRepostingId(id);
+    try {
+      await submitGossipRequest({
+        subject: target.title,
+        description: target.body,
+        gossipType: target.category,
+        locationPreference: target.location ? 'map' : target.locationPreference ?? 'current',
+        location: target.location ?? draftLocation ?? HYDERABAD,
+        expiresInHours: target.expiresInHours ?? 24,
+      });
+      loadGossips();
+    } finally {
+      setRepostingId(null);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar style="light" />
@@ -105,7 +120,13 @@ function AppShell() {
           />
         ) : null}
         {activeTab === "feed" ? (
-          <GossipFeedTab gossips={gossips} onDelete={handleDeleteGossip} deletingId={deletingId} />
+          <GossipFeedTab
+            gossips={gossips}
+            onDelete={handleDeleteGossip}
+            deletingId={deletingId}
+            onRepost={handleRepostGossip}
+            repostingId={repostingId}
+          />
         ) : null}
       </View>
       <AddGossipModal

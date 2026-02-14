@@ -58,6 +58,8 @@ type RemoteGossip = {
   location?: { latitude: number; longitude: number } | null;
   expiresAt?: string | null;
   expiresInHours?: number;
+  expired?: boolean;
+  locationPreference?: string;
 };
 
 export async function fetchGossips(): Promise<RemoteGossip[]> {

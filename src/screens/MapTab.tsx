@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import {
   Animated,
@@ -44,6 +44,25 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
   const sheetHeight = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
   const mapRef = useRef<MapView | null>(null);
   const webMapProps: Record<string, unknown> = Platform.OS === 'web' ? { googleMapsApiKey: mapApiKey } : {};
+
+  const visibleGossips = useMemo(() => {
+    if (!region) return gossips;
+    const latDelta = region.latitudeDelta ?? HYDERABAD.latitudeDelta;
+    const lonDelta = region.longitudeDelta ?? HYDERABAD.longitudeDelta;
+    const latMin = region.latitude - latDelta / 2;
+    const latMax = region.latitude + latDelta / 2;
+    const lonMin = region.longitude - lonDelta / 2;
+    const lonMax = region.longitude + lonDelta / 2;
+    return gossips.filter((item) => {
+      if (!item.location) return false;
+      return (
+        item.location.latitude >= latMin &&
+        item.location.latitude <= latMax &&
+        item.location.longitude >= lonMin &&
+        item.location.longitude <= lonMax
+      );
+    });
+  }, [gossips, region]);
 
   const toggleSheet = () => {
     const target = sheetExpanded ? SHEET_COLLAPSED : SHEET_EXPANDED;
@@ -226,7 +245,7 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
             description="Prototype"
             pinColor="#bae6fd"
           />
-          {gossips
+          {visibleGossips
             .filter((item) => item.location)
             .map((item) => (
               <Marker
@@ -356,12 +375,12 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
         >
           <TouchableOpacity activeOpacity={0.9} style={styles.sheetHandle} onPress={toggleSheet}>
             <View style={styles.sheetGrabber} />
-            <Text style={styles.sheetTitle}>{gossips.length} gossips in view</Text>
+            <Text style={styles.sheetTitle}>{visibleGossips.length} gossips in view</Text>
             <Text style={styles.sheetSubtitle}>Pull up to browse the latest whispers</Text>
           </TouchableOpacity>
           {sheetExpanded ? (
             <ScrollView style={styles.sheetContent} contentContainerStyle={{ paddingBottom: 24 }}>
-              {gossips.map((item) => (
+              {visibleGossips.map((item) => (
                 <GossipCard key={item.id} item={item} />
               ))}
             </ScrollView>

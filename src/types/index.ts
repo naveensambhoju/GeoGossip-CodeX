@@ -7,6 +7,9 @@ export type Gossip = {
   location?: { latitude: number; longitude: number } | null;
   expiresAt?: string | null;
   expiryLabel?: string | null;
+  expiresInHours?: number;
+  expired?: boolean;
+  locationPreference?: string | null;
 };
 
 export type TabKey = 'map' | 'feed';

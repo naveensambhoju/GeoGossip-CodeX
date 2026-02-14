@@ -137,6 +137,8 @@ export const listGossips = onRequest(async (request, response) => {
       location?: {latitude: number; longitude: number} | null;
       expiresAt?: string | null;
       expiresInHours?: number;
+      expired?: boolean;
+      locationPreference?: string;
     }>>((acc, doc) => {
       const data = doc.data() as NewGossipPayload & {
         createdAt?: FirebaseFirestore.Timestamp;
@@ -144,9 +146,7 @@ export const listGossips = onRequest(async (request, response) => {
       };
 
       const expiresAtDate = data.expiresAt?.toDate();
-      if (expiresAtDate && expiresAtDate.getTime() <= now) {
-        return acc;
-      }
+      const isExpired = expiresAtDate ? expiresAtDate.getTime() <= now : false;
 
       const createdAtIso = data.createdAt ?
         data.createdAt.toDate().toISOString() :
@@ -161,6 +161,8 @@ export const listGossips = onRequest(async (request, response) => {
         location: data.location ?? null,
         expiresAt: expiresAtDate ? expiresAtDate.toISOString() : null,
         expiresInHours: data.expiresInHours ?? DEFAULT_EXPIRY,
+        expired: isExpired,
+        locationPreference: data.locationPreference ?? "current",
       });
       return acc;
     }, []);

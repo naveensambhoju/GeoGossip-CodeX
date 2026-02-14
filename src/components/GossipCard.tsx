@@ -8,14 +8,21 @@ type Props = {
 };
 
 export function GossipCard({ item, actions }: Props) {
+  const isExpired = item.expiryLabel === 'Expired';
+  const freshnessDisplay = isExpired
+    ? `${item.freshness}`
+    : item.expiryLabel
+    ? `${item.freshness} (${item.expiryLabel})`
+    : item.freshness;
+
   return (
     <View style={styles.card}>
       <View style={styles.cardMeta}>
         <Text style={styles.cardCategory}>{item.category}</Text>
-        <Text style={styles.cardFreshness}>
-          {item.freshness}
-          {item.expiryLabel ? ` (${item.expiryLabel})` : ''}
-        </Text>
+        <View style={styles.cardMetaRight}>
+          {isExpired ? <Text style={styles.expiredTag}>Expired</Text> : null}
+          <Text style={styles.cardFreshness}>{freshnessDisplay}</Text>
+        </View>
       </View>
       <Text style={styles.cardTitle}>{item.title}</Text>
       <Text style={styles.cardBody}>{item.body}</Text>
@@ -44,8 +51,22 @@ const styles = StyleSheet.create({
     color: '#fbbf24',
     fontWeight: '600',
   },
+  cardMetaRight: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
   cardFreshness: {
     color: '#94a3b8',
+  },
+  expiredTag: {
+    backgroundColor: 'rgba(248, 113, 113, 0.15)',
+    color: '#f87171',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    fontSize: 12,
+    fontWeight: '600',
   },
   cardTitle: {
     color: '#f8fafc',
