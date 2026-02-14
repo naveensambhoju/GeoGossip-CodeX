@@ -62,8 +62,11 @@ type RemoteGossip = {
   locationPreference?: string;
 };
 
-export async function fetchGossips(): Promise<RemoteGossip[]> {
-  const response = await fetch(listEndpoint);
+export async function fetchGossips(options?: { includeExpired?: boolean }): Promise<RemoteGossip[]> {
+  const includeParam = options?.includeExpired
+    ? `${listEndpoint}${listEndpoint.includes('?') ? '&' : '?'}includeExpired=true`
+    : listEndpoint;
+  const response = await fetch(includeParam);
 
   if (!response.ok) {
     const errorBody = await response.text();

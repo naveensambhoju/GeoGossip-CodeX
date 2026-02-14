@@ -41,7 +41,9 @@ export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: Map
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [visibleGossips, setVisibleGossips] = useState<Gossip[]>(gossips);
+  const [visibleGossips, setVisibleGossips] = useState<Gossip[]>(() =>
+    gossips.filter((item) => !item.expired),
+  );
   const [viewportLoading, setViewportLoading] = useState(false);
   const pulseAnim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
@@ -52,8 +54,9 @@ export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: Map
   useEffect(() => {
     setViewportLoading(true);
     const timer = setTimeout(() => {
+      const activeGossips = gossips.filter((item) => !item.expired);
       if (!region) {
-        setVisibleGossips(gossips);
+        setVisibleGossips(activeGossips);
         setViewportLoading(false);
         return;
       }
@@ -64,7 +67,7 @@ export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: Map
       const lonMin = region.longitude - lonDelta / 2;
       const lonMax = region.longitude + lonDelta / 2;
       setVisibleGossips(
-        gossips.filter((item) => {
+        activeGossips.filter((item) => {
           if (!item.location) return false;
           return (
             item.location.latitude >= latMin &&

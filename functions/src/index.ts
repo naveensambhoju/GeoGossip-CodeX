@@ -121,6 +121,7 @@ export const listGossips = onRequest(async (request, response) => {
   }
 
   try {
+    const includeExpired = request.query.includeExpired === "true";
     const snapshot = await db
       .collection("gossips")
       .orderBy("createdAt", "desc")
@@ -147,6 +148,9 @@ export const listGossips = onRequest(async (request, response) => {
 
       const expiresAtDate = data.expiresAt?.toDate();
       const isExpired = expiresAtDate ? expiresAtDate.getTime() <= now : false;
+      if (!includeExpired && isExpired) {
+        return acc;
+      }
 
       const createdAtIso = data.createdAt ?
         data.createdAt.toDate().toISOString() :

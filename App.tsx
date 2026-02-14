@@ -39,7 +39,8 @@ function AppShell() {
   } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [repostingId, setRepostingId] = useState<string | null>(null);
-  const [gossips, setGossips] = useState<Gossip[]>([]);
+  const [activeGossips, setActiveGossips] = useState<Gossip[]>([]);
+  const [allGossips, setAllGossips] = useState<Gossip[]>([]);
   const [loadingGossips, setLoadingGossips] = useState(true);
   const [view, setView] = useState<"main" | "profile" | "settings">("main");
 
@@ -51,17 +52,23 @@ function AppShell() {
   const loadGossips = useCallback(async () => {
     setLoadingGossips(true);
     try {
-      const remote = await fetchGossips();
-      setGossips(
-        remote.map((item) => ({
+      const [remoteActive, remoteAll] = await Promise.all([
+        fetchGossips(),
+        fetchGossips({ includeExpired: true }),
+      ]);
+
+      const normalize = (items: typeof remoteActive) =>
+        items.map((item) => ({
           ...item,
           freshness: formatFreshness(item.freshness),
           expiryLabel: item.expired ? "Expired" : formatExpiryCountdown(item.expiresAt),
           expiresInHours: item.expiresInHours,
           expired: item.expired ?? false,
           locationPreference: item.locationPreference ?? null,
-        })),
-      );
+        }));
+
+      setActiveGossips(normalize(remoteActive));
+      setAllGossips(normalize(remoteAll));
     } catch (error) {
       console.error("Failed to load gossips", error);
     } finally {
@@ -89,14 +96,15 @@ function AppShell() {
     setDeletingId(id);
     try {
       await deleteGossipRequest(id);
-      setGossips((prev) => prev.filter((item) => item.id !== id));
+      setAllGossips((prev) => prev.filter((item) => item.id !== id));
+      setActiveGossips((prev) => prev.filter((item) => item.id !== id));
     } finally {
       setDeletingId(null);
     }
   };
 
   const handleRepostGossip = async (id: string) => {
-    const target = gossips.find((item) => item.id === id);
+    const target = allGossips.find((item) => item.id === id);
     if (!target) return;
     setRepostingId(id);
     try {
@@ -130,7 +138,7 @@ function AppShell() {
           <View style={styles.contentArea}>
             {activeTab === "map" ? (
               <MapTab
-                gossips={gossips}
+                gossips={activeGossips}
                 mapApiKey={mapApiKey}
                 onAddRequest={openComposer}
                 onProfilePress={() => setView("profile")}
@@ -138,7 +146,7 @@ function AppShell() {
             ) : null}
             {activeTab === "feed" ? (
               <GossipFeedTab
-                gossips={gossips}
+                gossips={allGossips}
                 onDelete={handleDeleteGossip}
                 deletingId={deletingId}
                 onRepost={handleRepostGossip}
