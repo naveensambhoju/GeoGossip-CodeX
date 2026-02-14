@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   Platform,
@@ -39,29 +40,42 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [visibleGossips, setVisibleGossips] = useState<Gossip[]>(gossips);
+  const [viewportLoading, setViewportLoading] = useState(false);
   const pulseAnim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
   const sheetHeight = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
   const mapRef = useRef<MapView | null>(null);
   const webMapProps: Record<string, unknown> = Platform.OS === 'web' ? { googleMapsApiKey: mapApiKey } : {};
 
-  const visibleGossips = useMemo(() => {
-    if (!region) return gossips;
-    const latDelta = region.latitudeDelta ?? HYDERABAD.latitudeDelta;
-    const lonDelta = region.longitudeDelta ?? HYDERABAD.longitudeDelta;
-    const latMin = region.latitude - latDelta / 2;
-    const latMax = region.latitude + latDelta / 2;
-    const lonMin = region.longitude - lonDelta / 2;
-    const lonMax = region.longitude + lonDelta / 2;
-    return gossips.filter((item) => {
-      if (!item.location) return false;
-      return (
-        item.location.latitude >= latMin &&
-        item.location.latitude <= latMax &&
-        item.location.longitude >= lonMin &&
-        item.location.longitude <= lonMax
+  useEffect(() => {
+    setViewportLoading(true);
+    const timer = setTimeout(() => {
+      if (!region) {
+        setVisibleGossips(gossips);
+        setViewportLoading(false);
+        return;
+      }
+      const latDelta = region.latitudeDelta ?? HYDERABAD.latitudeDelta;
+      const lonDelta = region.longitudeDelta ?? HYDERABAD.longitudeDelta;
+      const latMin = region.latitude - latDelta / 2;
+      const latMax = region.latitude + latDelta / 2;
+      const lonMin = region.longitude - lonDelta / 2;
+      const lonMax = region.longitude + lonDelta / 2;
+      setVisibleGossips(
+        gossips.filter((item) => {
+          if (!item.location) return false;
+          return (
+            item.location.latitude >= latMin &&
+            item.location.latitude <= latMax &&
+            item.location.longitude >= lonMin &&
+            item.location.longitude <= lonMax
+          );
+        }),
       );
-    });
+      setViewportLoading(false);
+    }, 100);
+    return () => clearTimeout(timer);
   }, [gossips, region]);
 
   const toggleSheet = () => {
@@ -375,7 +389,13 @@ export function MapTab({ gossips, mapApiKey, onAddRequest }: MapTabProps) {
         >
           <TouchableOpacity activeOpacity={0.9} style={styles.sheetHandle} onPress={toggleSheet}>
             <View style={styles.sheetGrabber} />
-            <Text style={styles.sheetTitle}>{visibleGossips.length} gossips in view</Text>
+            <View style={styles.sheetTitleRow}>
+              {viewportLoading ? (
+                <ActivityIndicator size="small" color="#38bdf8" />
+              ) : (
+                <Text style={styles.sheetTitle}>{visibleGossips.length} gossips in view</Text>
+              )}
+            </View>
             <Text style={styles.sheetSubtitle}>Pull up to browse the latest whispers</Text>
           </TouchableOpacity>
           {sheetExpanded ? (
@@ -706,6 +726,11 @@ const styles = StyleSheet.create({
     color: '#f8fafc',
     fontSize: 16,
     fontWeight: '600',
+  },
+  sheetTitleRow: {
+    minHeight: 20,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
   sheetSubtitle: {
     color: '#94a3b8',

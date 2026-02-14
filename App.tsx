@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { MapTab } from "./src/screens/MapTab";
@@ -38,6 +38,7 @@ function AppShell() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [repostingId, setRepostingId] = useState<string | null>(null);
   const [gossips, setGossips] = useState<Gossip[]>([]);
+  const [loadingGossips, setLoadingGossips] = useState(true);
 
   const openComposer = (location: { latitude: number; longitude: number }) => {
     setDraftLocation(location);
@@ -45,13 +46,14 @@ function AppShell() {
   };
 
   const loadGossips = useCallback(async () => {
+    setLoadingGossips(true);
     try {
       const remote = await fetchGossips();
       setGossips(
         remote.map((item) => ({
           ...item,
           freshness: formatFreshness(item.freshness),
-          expiryLabel: item.expired ? 'Expired' : formatExpiryCountdown(item.expiresAt),
+          expiryLabel: item.expired ? "Expired" : formatExpiryCountdown(item.expiresAt),
           expiresInHours: item.expiresInHours,
           expired: item.expired ?? false,
           locationPreference: item.locationPreference ?? null,
@@ -59,6 +61,8 @@ function AppShell() {
       );
     } catch (error) {
       console.error("Failed to load gossips", error);
+    } finally {
+      setLoadingGossips(false);
     }
   }, []);
 
@@ -129,6 +133,11 @@ function AppShell() {
           />
         ) : null}
       </View>
+      {loadingGossips ? (
+        <View style={styles.globalLoader} pointerEvents="none">
+          <ActivityIndicator size="large" color="#38bdf8" />
+        </View>
+      ) : null}
       <AddGossipModal
         visible={composerVisible}
         onClose={() => setComposerVisible(false)}
@@ -148,5 +157,15 @@ const styles = StyleSheet.create({
   contentArea: {
     flex: 1,
     paddingBottom: 96,
+  },
+  globalLoader: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(2, 6, 23, 0.4)",
   },
 });
