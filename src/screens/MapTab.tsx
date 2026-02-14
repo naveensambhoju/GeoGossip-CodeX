@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import {
   ActivityIndicator,
@@ -11,6 +11,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  PanResponder,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gossip, MapVisualType, PlaceSuggestion } from '../types';
@@ -58,6 +59,8 @@ export function MapTab({
   const pulseAnim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
   const sheetHeight = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
+  const sheetStartHeight = useRef(SHEET_COLLAPSED);
+  const sheetCurrentHeight = useRef(SHEET_COLLAPSED);
   const mapRef = useRef<MapView | null>(null);
   const webMapProps: Record<string, unknown> = Platform.OS === 'web' ? { googleMapsApiKey: mapApiKey } : {};
   const { palette } = useTheme();
@@ -96,16 +99,24 @@ export function MapTab({
     return () => clearTimeout(timer);
   }, [gossips, region]);
 
+  const animateSheetTo = useCallback(
+    (expand: boolean) => {
+      const target = expand ? SHEET_EXPANDED : SHEET_COLLAPSED;
+      setSheetExpanded(expand);
+      sheetCurrentHeight.current = target;
+      Animated.spring(sheetHeight, {
+        toValue: target,
+        useNativeDriver: false,
+        damping: 20,
+        stiffness: 160,
+        mass: 0.8,
+      }).start();
+    },
+    [sheetHeight],
+  );
+
   const toggleSheet = () => {
-    const target = sheetExpanded ? SHEET_COLLAPSED : SHEET_EXPANDED;
-    setSheetExpanded((prev) => !prev);
-    Animated.spring(sheetHeight, {
-      toValue: target,
-      useNativeDriver: false,
-      damping: 20,
-      stiffness: 160,
-      mass: 0.8,
-    }).start();
+    animateSheetTo(!sheetExpanded);
   };
 
   const handleRecenter = () => {
@@ -113,6 +124,33 @@ export function MapTab({
     mapRef.current?.animateToRegion(HYDERABAD, 500);
     setRegion(HYDERABAD);
   };
+
+  const finalizeSheetPosition = useCallback(() => {
+    const halfway = (SHEET_COLLAPSED + SHEET_EXPANDED) / 2;
+    const shouldExpand = sheetCurrentHeight.current > halfway;
+    animateSheetTo(shouldExpand);
+  }, [animateSheetTo]);
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 4,
+        onPanResponderGrant: () => {
+          sheetStartHeight.current = sheetCurrentHeight.current;
+        },
+        onPanResponderMove: (_, gesture) => {
+          const nextHeight = Math.min(
+            SHEET_EXPANDED,
+            Math.max(SHEET_COLLAPSED, sheetStartHeight.current - gesture.dy),
+          );
+          sheetHeight.setValue(nextHeight);
+          sheetCurrentHeight.current = nextHeight;
+        },
+        onPanResponderRelease: finalizeSheetPosition,
+        onPanResponderTerminate: finalizeSheetPosition,
+      }),
+    [finalizeSheetPosition, sheetHeight],
+  );
 
   const clampDelta = (value: number) => {
     const min = 0.0006;
@@ -430,9 +468,18 @@ export function MapTab({
             <Text style={styles.zoomButtonText}>−</Text>
           </TouchableOpacity>
         </View>
-        <Animated.View style={[styles.sheet, { height: sheetHeight }]}
-        >
-          <TouchableOpacity activeOpacity={0.9} style={styles.sheetHandle} onPress={toggleSheet}>
+        <Animated.View style={[styles.sheet, { height: sheetHeight }]} {...panResponder.panHandlers}>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            style={styles.sheetHandle}
+            onPress={toggleSheet}
+            onLayout={(event) => {
+              const height = event.nativeEvent.layout.height || 0;
+              if (height) {
+                sheetStartHeight.current = sheetCurrentHeight.current;
+              }
+            }}
+          >
             <View style={styles.sheetGrabber} />
             <View style={styles.sheetTitleRow}>
               {viewportLoading ? (

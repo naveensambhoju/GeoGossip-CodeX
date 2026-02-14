@@ -197,11 +197,11 @@ const createStyles = (palette: ThemePalette) =>
     root: {
       flex: 1,
       backgroundColor: palette.background,
-      paddingBottom: 16,
+      paddingBottom: 4,
     },
     contentArea: {
       flex: 1,
-      paddingBottom: 96,
+      paddingBottom: 72,
     },
     globalLoader: {
       position: "absolute",
