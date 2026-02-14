@@ -261,12 +261,6 @@ export function MapTab({ gossips, mapApiKey, onAddRequest, onProfilePress }: Map
           showsMyLocationButton={false}
           {...webMapProps}
         >
-          <Marker
-            coordinate={HYDERABAD}
-            title="GeoGossip"
-            description="Prototype"
-            pinColor="#bae6fd"
-          />
           {visibleGossips
             .filter((item) => item.location)
             .map((item) => (
