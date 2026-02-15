@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { GOSSIP_TYPES } from '../constants';
+import { DEFAULT_EXPIRY_HOURS, EXPIRY_OPTIONS } from '../constants/forms';
 import { LocationPreference } from '../types';
 import { ThemePalette, useTheme } from '../theme';
 
@@ -21,14 +22,6 @@ type Props = {
 };
 
 const DEFAULT_TYPE = GOSSIP_TYPES[0] ?? 'General';
-const EXPIRY_OPTIONS = [
-  { label: '24 hrs', value: 24 },
-  { label: '12 hrs', value: 12 },
-  { label: '6 hrs', value: 6 },
-  { label: '1 hr', value: 1 },
-] as const;
-const DEFAULT_EXPIRY = 1;
-
 export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: Props) {
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
@@ -38,7 +31,7 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [subjectTouched, setSubjectTouched] = useState(false);
   const [descriptionTouched, setDescriptionTouched] = useState(false);
-  const [expiresInHours, setExpiresInHours] = useState<number>(DEFAULT_EXPIRY);
+  const [expiresInHours, setExpiresInHours] = useState<number>(DEFAULT_EXPIRY_HOURS);
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const placeholderColor = palette.textSecondary;
@@ -57,7 +50,7 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
     setDescription('');
     setGossipType(DEFAULT_TYPE);
     setTypeMenuOpen(false);
-    setExpiresInHours(DEFAULT_EXPIRY);
+    setExpiresInHours(DEFAULT_EXPIRY_HOURS);
     onClose();
   };
 

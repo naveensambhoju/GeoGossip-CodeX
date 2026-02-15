@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ThemePalette, useTheme } from '../theme';
+import { PROFILE_SECTIONS, PROFILE_USER } from '../constants/profile';
 
 type Props = {
   onClose: () => void;
@@ -27,20 +28,19 @@ export function ProfileScreen({ onClose, onOpenSettings }: Props) {
       <View style={styles.body}>
         <View style={styles.avatarWrapper}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarInitials}>NS</Text>
+            <Text style={styles.avatarInitials}>{PROFILE_USER.initials}</Text>
           </View>
-            <Text style={styles.fullName}>Naveen Sambhoju</Text>
+            <Text style={styles.fullName}>{PROFILE_USER.fullName}</Text>
         </View>
-        <View style={styles.section}>
-          <TouchableOpacity>
-            <Text style={styles.sectionLink}>Groups</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.section}>
-          <TouchableOpacity onPress={onOpenSettings}>
-            <Text style={styles.sectionLink}>Settings</Text>
-          </TouchableOpacity>
-        </View>
+        {PROFILE_SECTIONS.map((section) => (
+          <View style={styles.section} key={section.label}>
+            <TouchableOpacity
+              onPress={section.action === 'settings' ? onOpenSettings : undefined}
+            >
+              <Text style={styles.sectionLink}>{section.label}</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
       </View>
     </SafeAreaView>
   );

@@ -17,17 +17,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gossip, MapVisualType, PlaceSuggestion } from '../types';
 import { GOSSIP_TYPES, HYDERABAD } from '../constants';
 import { MAP_COLORS } from '../constants/colors';
+import { MAP_TYPE_OPTIONS, PIN_ZOOM_THRESHOLD, SHEET_COLLAPSED, SHEET_EXPANDED_RATIO } from '../constants/map';
 import { GossipCard } from '../components/GossipCard';
 import { ThemePalette, useTheme } from '../theme';
-
-const SHEET_COLLAPSED = 70;
-const SHEET_EXPANDED = Dimensions.get('window').height * 0.82;
-
-const MAP_TYPE_OPTIONS: { key: MapVisualType; label: string }[] = [
-  { key: 'standard', label: 'Map' },
-  { key: 'satellite', label: 'Satellite' },
-];
-const PIN_ZOOM_THRESHOLD = 0.12;
 
 export type MapTabProps = {
   gossips: Gossip[];
@@ -75,7 +67,7 @@ export function MapTab({
   const searchPlaceholder = palette.textSecondary;
   const expandedHeight = useMemo(() => {
     const windowHeight = Dimensions.get('window').height;
-    const computed = windowHeight - sheetReservedTop;
+    const computed = Math.min(windowHeight * SHEET_EXPANDED_RATIO, windowHeight - sheetReservedTop);
     return Math.max(SHEET_COLLAPSED + 80, Math.min(windowHeight - 40, computed));
   }, [sheetReservedTop]);
   const heatmapPoints = useMemo(

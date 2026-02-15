@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { ThemePalette, useTheme } from '../theme';
+import { SETTINGS_COPY } from '../constants/settings';
 
 type Props = {
   onClose: () => void;
@@ -24,13 +25,13 @@ export function SettingsScreen({ onClose, theme, onChangeTheme }: Props) {
             <View style={[styles.backArm, styles.backArmBottom]} />
           </View>
         </TouchableOpacity>
-        <Text style={styles.title}>Settings</Text>
+        <Text style={styles.title}>{SETTINGS_COPY.title}</Text>
       </View>
       <View style={styles.body}>
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Appearance</Text>
+          <Text style={styles.sectionLabel}>{SETTINGS_COPY.appearanceLabel}</Text>
           <View style={styles.themeToggleRow}>
-            <Text style={styles.themeToggleLabel}>Dark theme</Text>
+            <Text style={styles.themeToggleLabel}>{SETTINGS_COPY.darkThemeLabel}</Text>
             <Switch
               value={isDark}
               onValueChange={(value) => onChangeTheme(value ? 'dark' : 'light')}
