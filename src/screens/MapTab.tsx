@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import MapView, { Heatmap, Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import {
   ActivityIndicator,
   Animated,
@@ -26,6 +26,7 @@ const MAP_TYPE_OPTIONS: { key: MapVisualType; label: string }[] = [
   { key: 'standard', label: 'Map' },
   { key: 'satellite', label: 'Satellite' },
 ];
+const PIN_ZOOM_THRESHOLD = 0.12;
 
 export type MapTabProps = {
   gossips: Gossip[];
@@ -56,6 +57,8 @@ export function MapTab({
     gossips.filter((item) => !item.expired),
   );
   const [viewportLoading, setViewportLoading] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [forcePins, setForcePins] = useState(false);
   const pulseAnim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
   const sheetHeight = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
@@ -75,6 +78,17 @@ export function MapTab({
     const computed = windowHeight - sheetReservedTop;
     return Math.max(SHEET_COLLAPSED + 80, Math.min(windowHeight - 40, computed));
   }, [sheetReservedTop]);
+  const heatmapPoints = useMemo(
+    () =>
+      gossips
+        .filter((item) => item.location)
+        .map((item) => ({
+          latitude: item.location!.latitude,
+          longitude: item.location!.longitude,
+          weight: item.expired ? 0.4 : 1,
+        })),
+    [gossips],
+  );
 
   useEffect(() => {
     setViewportLoading(true);
@@ -172,6 +186,17 @@ export function MapTab({
     return Math.min(max, Math.max(min, value));
   };
 
+  const pinZoomSatisfied =
+    (region?.latitudeDelta ?? HYDERABAD.latitudeDelta) <= PIN_ZOOM_THRESHOLD &&
+    (region?.longitudeDelta ?? HYDERABAD.longitudeDelta) <= PIN_ZOOM_THRESHOLD;
+  const showPins = forcePins || pinZoomSatisfied;
+
+  useEffect(() => {
+    if (pinZoomSatisfied && forcePins) {
+      setForcePins(false);
+    }
+  }, [pinZoomSatisfied, forcePins]);
+
   const handleZoom = (direction: 'in' | 'out') => {
     if (!mapReady) return;
     const current = region ?? HYDERABAD;
@@ -182,6 +207,12 @@ export function MapTab({
       latitudeDelta: nextDelta,
       longitudeDelta: nextDelta,
     };
+    if (
+      nextRegion.latitudeDelta <= PIN_ZOOM_THRESHOLD &&
+      nextRegion.longitudeDelta <= PIN_ZOOM_THRESHOLD
+    ) {
+      setForcePins(true);
+    }
     mapRef.current?.animateToRegion(nextRegion, 200);
     setRegion(nextRegion);
   };
@@ -322,20 +353,34 @@ export function MapTab({
           showsMyLocationButton={false}
           {...webMapProps}
         >
-          {visibleGossips
-            .filter((item) => item.location)
-            .map((item) => (
-              <Marker
-                key={`gossip-${item.id}`}
-                coordinate={{
-                  latitude: item.location!.latitude,
-                  longitude: item.location!.longitude,
-                }}
-                title={item.title}
-                description={item.body}
-                pinColor="#fbbf24"
-              />
-            ))}
+          {!showPins && heatmapPoints.length ? (
+            <Heatmap
+              points={heatmapPoints}
+              radius={50}
+              opacity={0.6}
+              gradient={{
+                colors: ['#4ade80', '#facc15', '#fb923c', '#ef4444'],
+                startPoints: [0.1, 0.4, 0.7, 1],
+                colorMapSize: 256,
+              }}
+            />
+          ) : null}
+          {showPins
+            ? visibleGossips
+                .filter((item) => item.location)
+                .map((item) => (
+                  <Marker
+                    key={`gossip-${item.id}`}
+                    coordinate={{
+                      latitude: item.location!.latitude,
+                      longitude: item.location!.longitude,
+                    }}
+                    title={item.title}
+                    description={item.body}
+                    pinColor="#fbbf24"
+                  />
+                ))
+            : null}
         </MapView>
         <View pointerEvents="none" style={styles.centerPin}>
           <View style={styles.centerPinBullet}>
