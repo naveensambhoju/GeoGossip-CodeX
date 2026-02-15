@@ -61,14 +61,11 @@ function AppShell({ theme, setTheme }: AppShellProps) {
     setComposerVisible(true);
   };
 
-  const loadGossips = useCallback(async (filterOverride?: string) => {
+  const loadGossips = useCallback(async () => {
     setLoadingGossips(true);
     try {
-      const targetFilter = filterOverride ?? mapFilter;
-      const categoryFilter =
-        targetFilter && targetFilter !== "All" ? targetFilter : undefined;
       const [remoteActive, remoteAll] = await Promise.all([
-        fetchGossips({ category: categoryFilter }),
+        fetchGossips(),
         fetchGossips({ includeExpired: true }),
       ]);
 
@@ -89,11 +86,11 @@ function AppShell({ theme, setTheme }: AppShellProps) {
     } finally {
       setLoadingGossips(false);
     }
-  }, [mapFilter]);
+  }, []);
 
   useEffect(() => {
-    loadGossips(mapFilter);
-  }, [loadGossips, mapFilter]);
+    loadGossips();
+  }, [loadGossips]);
 
   const handleSubmitGossip = async (form: SubmitGossipForm) => {
     await submitGossipRequest({
@@ -137,6 +134,17 @@ function AppShell({ theme, setTheme }: AppShellProps) {
     }
   };
 
+  const filteredActiveGossips = useMemo(
+    () =>
+      mapFilter === "All"
+        ? activeGossips
+        : activeGossips.filter(
+            (item) =>
+              item.category?.toLowerCase() === mapFilter.toLowerCase(),
+          ),
+    [activeGossips, mapFilter],
+  );
+
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar style="light" />
@@ -157,7 +165,7 @@ function AppShell({ theme, setTheme }: AppShellProps) {
           <View style={styles.contentArea}>
             {activeTab === "map" ? (
               <MapTab
-                gossips={activeGossips}
+                gossips={filteredActiveGossips}
                 mapApiKey={mapApiKey}
                 onAddRequest={openComposer}
                 onProfilePress={() => setView("profile")}
