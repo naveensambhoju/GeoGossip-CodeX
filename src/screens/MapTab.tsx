@@ -533,7 +533,7 @@ const createStyles = (palette: ThemePalette) =>
     left: '50%',
     top: '50%',
     alignItems: 'center',
-    transform: [{ translateY: -30 }, { translateX: -15 }],
+    transform: [{ translateY: -44 }, { translateX: -15 }],
   },
   centerPinBullet: {
     width: 30,
