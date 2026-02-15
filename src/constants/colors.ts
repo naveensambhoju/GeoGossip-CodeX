@@ -5,7 +5,7 @@ export const MAP_COLORS = {
   centerPinPulse: 'rgba(220, 38, 38, 0.35)',
   centerPinLine: '#dc2626',
   centerPinShadow: '#b91c1c',
-  gossipPin: '#fbbf24',
+  gossipPin: '#38bdf8',
   heatmapGradient: ['#4ade80', '#facc15', '#fb923c', '#ef4444'] as const,
   userLocationPulse: 'rgba(59, 130, 246, 0.3)',
   userLocationOuter: '#2563eb',
