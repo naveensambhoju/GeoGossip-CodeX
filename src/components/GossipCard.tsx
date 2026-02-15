@@ -18,7 +18,15 @@ export function GossipCard({ item, actions }: Props) {
   return (
     <View style={styles.card}>
       <View style={styles.cardMeta}>
-        <Text style={styles.cardCategory}>{item.category}</Text>
+        <View style={styles.cardMetaLeft}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>NS</Text>
+          </View>
+          <View>
+            <Text style={styles.cardCategory}>{item.category}</Text>
+            <Text style={styles.cardAuthor}>Posted by Naveen</Text>
+          </View>
+        </View>
         <View style={styles.cardMetaRight}>
           {isExpired ? <Text style={styles.expiredTag}>Expired</Text> : null}
           <Text style={styles.cardFreshness}>{freshnessDisplay}</Text>
@@ -46,10 +54,21 @@ const styles = StyleSheet.create({
   cardMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  cardMetaLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   cardCategory: {
     color: '#fbbf24',
     fontWeight: '600',
+  },
+  cardAuthor: {
+    color: '#94a3b8',
+    fontSize: 12,
   },
   cardMetaRight: {
     flexDirection: 'row',
@@ -85,5 +104,17 @@ const styles = StyleSheet.create({
   },
   cardActions: {
     flex: 1,
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#fbbf24',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    color: '#7c2d12',
+    fontWeight: '700',
   },
 });
