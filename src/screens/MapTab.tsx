@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gossip, MapVisualType, PlaceSuggestion } from '../types';
 import { GOSSIP_TYPES, HYDERABAD } from '../constants';
+import { MAP_COLORS } from '../constants/colors';
 import { GossipCard } from '../components/GossipCard';
 import { ThemePalette, useTheme } from '../theme';
 
@@ -57,7 +58,6 @@ export function MapTab({
     gossips.filter((item) => !item.expired),
   );
   const [viewportLoading, setViewportLoading] = useState(false);
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [forcePins, setForcePins] = useState(false);
   const pulseAnim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
@@ -359,7 +359,7 @@ export function MapTab({
               radius={50}
               opacity={0.6}
               gradient={{
-                colors: ['#4ade80', '#facc15', '#fb923c', '#ef4444'],
+                colors: MAP_COLORS.heatmapGradient as unknown as string[],
                 startPoints: [0.1, 0.4, 0.7, 1],
                 colorMapSize: 256,
               }}
@@ -377,7 +377,7 @@ export function MapTab({
                     }}
                     title={item.title}
                     description={item.body}
-                    pinColor="#fbbf24"
+                    pinColor={MAP_COLORS.gossipPin}
                   />
                 ))
             : null}
@@ -584,12 +584,12 @@ const createStyles = (palette: ThemePalette) =>
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#dc2626',
+    backgroundColor: MAP_COLORS.centerPinFill,
     borderWidth: 2,
-    borderColor: '#7f1d1d',
+    borderColor: MAP_COLORS.centerPinBorder,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#b91c1c',
+    shadowColor: MAP_COLORS.centerPinShadow,
     shadowOpacity: 0.4,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
@@ -599,13 +599,13 @@ const createStyles = (palette: ThemePalette) =>
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#fef2f2',
+    backgroundColor: MAP_COLORS.centerPinInner,
   },
   centerPinLine: {
     width: 2.5,
     height: 18,
     marginTop: -4,
-    backgroundColor: '#dc2626',
+    backgroundColor: MAP_COLORS.centerPinLine,
     borderRadius: 1,
   },
   addButton: {
@@ -618,7 +618,7 @@ const createStyles = (palette: ThemePalette) =>
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: MAP_COLORS.shadowDark,
     shadowOpacity: 0.25,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 4 },
@@ -831,7 +831,7 @@ const createStyles = (palette: ThemePalette) =>
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: palette.border,
-    shadowColor: '#000',
+    shadowColor: MAP_COLORS.shadowDark,
     shadowOpacity: 0.15,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
@@ -885,7 +885,7 @@ const createStyles = (palette: ThemePalette) =>
     borderColor: palette.border,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: MAP_COLORS.shadowDark,
     shadowOpacity: 0.15,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },

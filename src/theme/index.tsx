@@ -1,4 +1,5 @@
 import { createContext, useContext, ReactNode } from 'react';
+import { THEME_COLORS } from '../constants/colors';
 
 export type ThemeName = 'dark' | 'light';
 
@@ -16,57 +17,19 @@ export type ThemePalette = {
   accentContrast: string;
   danger: string;
   dangerBorder: string;
+  dangerSoft: string;
   success: string;
   successBorder: string;
   successText: string;
+  successSoft: string;
   searchBackground: string;
   searchClearBackground: string;
   sheetBackground: string;
 };
 
 export const THEMES: Record<ThemeName, ThemePalette> = {
-  dark: {
-    background: '#020617',
-    card: '#0f172a',
-    surface: '#0b1220',
-    border: '#1e293b',
-    overlay: 'rgba(2, 6, 23, 0.4)',
-    textPrimary: '#f8fafc',
-    textSecondary: '#94a3b8',
-    accent: '#38bdf8',
-    accentSoft: 'rgba(56, 189, 248, 0.15)',
-    accentStrong: '#1d4ed8',
-    accentContrast: '#031122',
-    danger: '#fb7185',
-    dangerBorder: '#fecdd3',
-    success: '#34d399',
-    successBorder: '#bbf7d0',
-    successText: '#064e3b',
-    searchBackground: '#0b1220cc',
-    searchClearBackground: '#1e293b',
-    sheetBackground: '#020617ee',
-  },
-  light: {
-    background: '#f8fafc',
-    card: '#ffffff',
-    surface: '#fff8f0',
-    border: '#e2e8f0',
-    overlay: 'rgba(248, 250, 252, 0.65)',
-    textPrimary: '#0f172a',
-    textSecondary: '#475569',
-    accent: '#2563eb',
-    accentSoft: 'rgba(37, 99, 235, 0.12)',
-    accentStrong: '#1d4ed8',
-    accentContrast: '#f8fafc',
-    danger: '#f87171',
-    dangerBorder: '#fecaca',
-    success: '#10b981',
-    successBorder: '#a7f3d0',
-    successText: '#064e3b',
-    searchBackground: '#edf2ff',
-    searchClearBackground: '#e2e8f0',
-    sheetBackground: '#ffffffee',
-  },
+  dark: { ...THEME_COLORS.dark },
+  light: { ...THEME_COLORS.light },
 };
 
 type ThemeContextValue = {

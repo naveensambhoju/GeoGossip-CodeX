@@ -1,6 +1,7 @@
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Gossip } from '../types';
+import { ThemePalette, useTheme } from '../theme';
 
 type Props = {
   item: Gossip;
@@ -8,6 +9,8 @@ type Props = {
 };
 
 export function GossipCard({ item, actions }: Props) {
+  const { palette } = useTheme();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const isExpired = item.expiryLabel === 'Expired';
   const freshnessDisplay = isExpired
     ? `${item.freshness}`
@@ -41,16 +44,17 @@ export function GossipCard({ item, actions }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#1e2b45',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#2f3e5a',
-    gap: 6,
-  },
+const createStyles = (palette: ThemePalette) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: palette.card,
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: palette.border,
+      gap: 6,
+    },
   cardMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -62,39 +66,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  cardCategory: {
-    color: '#fbbf24',
-    fontWeight: '600',
-  },
-  cardAuthor: {
-    color: '#94a3b8',
-    fontSize: 12,
-  },
+    cardCategory: {
+      color: palette.accent,
+      fontWeight: '600',
+    },
+    cardAuthor: {
+      color: palette.textSecondary,
+      fontSize: 12,
+    },
   cardMetaRight: {
     flexDirection: 'row',
     gap: 8,
     alignItems: 'center',
   },
-  cardFreshness: {
-    color: '#94a3b8',
-  },
-  expiredTag: {
-    backgroundColor: 'rgba(248, 113, 113, 0.15)',
-    color: '#f87171',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  cardTitle: {
-    color: '#f8fafc',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  cardBody: {
-    color: '#e2e8f0',
-  },
+    cardFreshness: {
+      color: palette.textSecondary,
+    },
+    expiredTag: {
+      backgroundColor: palette.dangerSoft,
+      color: palette.danger,
+      borderRadius: 12,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    cardTitle: {
+      color: palette.textPrimary,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    cardBody: {
+      color: palette.textSecondary,
+    },
   cardFooter: {
     marginTop: 8,
     flexDirection: 'row',
@@ -105,16 +109,16 @@ const styles = StyleSheet.create({
   cardActions: {
     flex: 1,
   },
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#fbbf24',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    color: '#7c2d12',
-    fontWeight: '700',
-  },
-});
+    avatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: palette.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    avatarText: {
+      color: palette.accentContrast,
+      fontWeight: '700',
+    },
+  });

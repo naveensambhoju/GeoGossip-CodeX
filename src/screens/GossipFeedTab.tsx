@@ -1,6 +1,8 @@
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useMemo } from 'react';
 import { Gossip } from '../types';
 import { GossipCard } from '../components/GossipCard';
+import { ThemePalette, useTheme } from '../theme';
 
 type Props = {
   gossips: Gossip[];
@@ -11,6 +13,8 @@ type Props = {
 };
 
 export function GossipFeedTab({ gossips, onDelete, onRepost, deletingId, repostingId }: Props) {
+  const { palette } = useTheme();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const renderActions = (gossip: Gossip) => {
     if (!onDelete) return null;
     const isDeleting = deletingId === gossip.id;
@@ -37,7 +41,11 @@ export function GossipFeedTab({ gossips, onDelete, onRepost, deletingId, reposti
             onPress={confirmRepost}
             disabled={isBusy}
           >
-            {isReposting ? <ActivityIndicator size="small" color="#064e3b" /> : <Text style={styles.repostButtonText}>Repost</Text>}
+            {isReposting ? (
+              <ActivityIndicator size="small" color={palette.successText} />
+            ) : (
+              <Text style={styles.repostButtonText}>Repost</Text>
+            )}
           </TouchableOpacity>
         ) : null}
         <TouchableOpacity
@@ -45,7 +53,11 @@ export function GossipFeedTab({ gossips, onDelete, onRepost, deletingId, reposti
           onPress={confirmDelete}
           disabled={isBusy}
         >
-          {isDeleting ? <ActivityIndicator size="small" color="#f8fafc" /> : <Text style={styles.deleteButtonText}>Delete</Text>}
+          {isDeleting ? (
+            <ActivityIndicator size="small" color={palette.accentContrast} />
+          ) : (
+            <Text style={styles.deleteButtonText}>Delete</Text>
+          )}
         </TouchableOpacity>
       </View>
     );
@@ -65,16 +77,17 @@ export function GossipFeedTab({ gossips, onDelete, onRepost, deletingId, reposti
   );
 }
 
-const styles = StyleSheet.create({
-  infoScroll: {
-    flex: 1,
-    backgroundColor: '#0f172a',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
+const createStyles = (palette: ThemePalette) =>
+  StyleSheet.create({
+    infoScroll: {
+      flex: 1,
+      backgroundColor: palette.card,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: palette.border,
+      paddingHorizontal: 16,
+      paddingTop: 16,
+    },
   list: {
     flex: 1,
   },
@@ -83,47 +96,47 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     gap: 8,
   },
-  sectionHero: {
-    color: '#f8fafc',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  deleteButton: {
-    backgroundColor: '#fb7185',
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    borderRadius: 999,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#fecdd3',
-    shadowColor: '#fb7185',
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
-  },
+    sectionHero: {
+      color: palette.textPrimary,
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    deleteButton: {
+      backgroundColor: palette.danger,
+      paddingVertical: 6,
+      paddingHorizontal: 16,
+      borderRadius: 999,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: palette.dangerBorder,
+      shadowColor: palette.danger,
+      shadowOpacity: 0.25,
+      shadowRadius: 3,
+      shadowOffset: { width: 0, height: 1 },
+      elevation: 2,
+    },
   deleteButtonLoading: {
     opacity: 0.7,
   },
-  deleteButtonText: {
-    color: '#f8fafc',
-    fontWeight: '600',
-  },
-  repostButton: {
-    backgroundColor: '#34d399',
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#bbf7d0',
-    shadowColor: '#34d399',
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
-  },
-  repostButtonText: {
-    color: '#064e3b',
-    fontWeight: '700',
-  },
-});
+    deleteButtonText: {
+      color: palette.accentContrast,
+      fontWeight: '600',
+    },
+    repostButton: {
+      backgroundColor: palette.success,
+      paddingVertical: 6,
+      paddingHorizontal: 16,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: palette.successBorder,
+      shadowColor: palette.success,
+      shadowOpacity: 0.25,
+      shadowRadius: 3,
+      shadowOffset: { width: 0, height: 1 },
+      elevation: 2,
+    },
+    repostButtonText: {
+      color: palette.successText,
+      fontWeight: '700',
+    },
+  });
