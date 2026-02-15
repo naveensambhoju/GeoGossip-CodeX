@@ -9,6 +9,5 @@ export type ProfileSection = {
 };
 
 export const PROFILE_SECTIONS: ProfileSection[] = [
-  { label: 'Groups', action: 'groups' },
   { label: 'Settings', action: 'settings' },
 ];
