@@ -66,14 +66,15 @@ export function MapTab({
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const searchBarTop = Math.max(insets.top, 12);
+  const filterRowTop = searchBarTop + 60;
+  const sheetReservedTop = searchBarTop + 120;
   const filterOptions = useMemo(() => ['All', ...GOSSIP_TYPES], []);
   const searchPlaceholder = palette.textSecondary;
   const expandedHeight = useMemo(() => {
     const windowHeight = Dimensions.get('window').height;
-    const reservedSpace = searchBarTop + 70;
-    const computed = windowHeight - reservedSpace;
+    const computed = windowHeight - sheetReservedTop;
     return Math.max(SHEET_COLLAPSED + 80, Math.min(windowHeight - 40, computed));
-  }, [searchBarTop]);
+  }, [sheetReservedTop]);
 
   useEffect(() => {
     setViewportLoading(true);
@@ -186,7 +187,6 @@ export function MapTab({
   };
 
   const hasSuggestionOverlay = Boolean(mapApiKey && (suggestions.length > 0 || searchLoading || searchError));
-  const filterRowTop = searchBarTop + 60;
   const mapTypeTop = hasSuggestionOverlay ? filterRowTop + 150 : filterRowTop + 52;
 
   useEffect(() => {
