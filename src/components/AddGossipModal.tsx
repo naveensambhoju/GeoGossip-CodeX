@@ -33,7 +33,6 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [gossipType, setGossipType] = useState<string>(DEFAULT_TYPE);
-  const [locationPreference, setLocationPreference] = useState<LocationPreference>('current');
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -57,14 +56,13 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
     setSubject('');
     setDescription('');
     setGossipType(DEFAULT_TYPE);
-    setLocationPreference('current');
     setTypeMenuOpen(false);
     setExpiresInHours(DEFAULT_EXPIRY);
     onClose();
   };
 
   const handlePreview = () => {
-    console.log('Preview gossip', { subject, description, gossipType, locationPreference });
+    console.log('Preview gossip', { subject, description, gossipType });
   };
 
   const handlePost = async () => {
@@ -81,7 +79,7 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
         subject,
         description,
         gossipType,
-        locationPreference,
+        locationPreference: 'map' as LocationPreference,
         location: initialLocation ?? null,
         expiresInHours,
       });
@@ -163,27 +161,6 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
                   ))}
                 </View>
               ) : null}
-            </View>
-          </View>
-          <View style={styles.formField}>
-            <Text style={styles.formLabel}>Location</Text>
-            <View style={styles.radioGroup}>
-              {[
-                { key: 'current', label: 'Use Current Location' },
-                { key: 'map', label: 'Choose from Map' },
-              ].map((option) => (
-                <TouchableOpacity
-                  key={option.key}
-                  style={styles.radioRow}
-                  onPress={() => setLocationPreference(option.key as LocationPreference)}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.radioOuter}>
-                    {locationPreference === option.key ? <View style={styles.radioInner} /> : null}
-                  </View>
-                  <Text style={styles.radioLabel}>{option.label}</Text>
-                </TouchableOpacity>
-              ))}
             </View>
           </View>
           <View style={styles.formField}>
@@ -323,34 +300,6 @@ const createStyles = (palette: ThemePalette) =>
       paddingHorizontal: 14,
     },
     dropdownOptionText: {
-      color: palette.textPrimary,
-      fontSize: 15,
-    },
-    radioGroup: {
-      gap: 8,
-    },
-    radioRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 10,
-      paddingVertical: 6,
-    },
-    radioOuter: {
-      width: 18,
-      height: 18,
-      borderRadius: 9,
-      borderWidth: 2,
-      borderColor: palette.accent,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    radioInner: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: palette.accent,
-    },
-    radioLabel: {
       color: palette.textPrimary,
       fontSize: 15,
     },
