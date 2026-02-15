@@ -47,6 +47,9 @@ export function AddGossipModal({ visible, onClose, onSubmit, initialLocation }: 
   useEffect(() => {
     if (!visible) {
       setTypeMenuOpen(false);
+      setSubjectTouched(false);
+      setDescriptionTouched(false);
+      setSubmitError(null);
     }
   }, [visible]);
 
